@@ -77,7 +77,10 @@ src/
 │   ├── apikeys/service.ts       # API key CRUD + validation
 │   ├── rbac/service.ts          # Role/permission checks, wildcard matching
 │   ├── config/service.ts        # DB key-value config with 1h cache
-│   └── ai-tasks/service.ts      # AI task tracking with credit deduction/revocation
+│   ├── ai-tasks/service.ts      # AI task tracking with credit deduction/revocation
+│   ├── storage/service.ts       # Storage manager + persistRemoteFile/makeSaveFiles
+│   ├── ai/service.ts            # core/ai provider assembly from settings; image + text jobs
+│   └── storybook/service.ts     # Illustrated picture books (async image pipeline)
 │
 ├── config/
 │   ├── index.ts                 # All env vars (app, db, auth, stripe, resend, storage, ai, locale)
@@ -144,7 +147,11 @@ API routes are thin server-route wrappers — they check auth, parse params, cal
 - Modules depend on `core/`, `config/`, `lib/`, and `drizzle-orm` — never on other modules' internals
 - Exception: `payment/service.ts` calls `credits/` and `subscriptions/` because payment success triggers credit granting and subscription creation. This is the ONE allowed cross-module dependency.
 - `ai-tasks/service.ts` calls `credits/` for consumption/revocation. This is the second.
+- `ai/service.ts` calls `config/` + `storage/`: it assembles the `core/ai` providers from DB settings and injects a storage-backed `saveFiles`, so generated media is persisted instead of being left on an expiring provider URL. Same shape as `storage/service.ts` reading `config/`. This is the third.
+- `storybook/service.ts` calls `ai/` (generation), `ai-tasks/` (task + credit lifecycle), `config/` (settings) and `storage/` (via `ai/`). A feature module orchestrating the shared services it is built on. This is the fourth.
 - All other modules are fully independent.
+
+**Async AI work has no queue.** Replicate/Fal return a pending task id; the job is finished by polling. Since Cloudflare Workers freeze the isolate once the response is sent, progress is made by the GET endpoints advancing in-flight tasks (`advanceStorybook()`) rather than by a background worker — reads carry a write, throttled per task. Keep this in mind before adding another async pipeline.
 
 ## Key Patterns
 
@@ -508,7 +515,7 @@ CONFIG_ENCRYPTION_KEY=
 
 **Provider credentials live in the admin panel, not env.** Payments (Stripe/
 Creem/PayPal/Alipay/WeChat), OAuth (Google/GitHub/One-Tap), email (Resend),
-storage (R2), AI (Replicate/Gemini/Fal), and analytics are configured at
+storage (R2), AI (Replicate/Gemini/Fal/Kie), and analytics are configured at
 `/admin/settings` and stored in the `config` table (encrypted when
 `CONFIG_ENCRYPTION_KEY` is set). Resolution is `{ ...envConfigs, ...dbConfigs }`
 — same-named env vars still work as fallbacks, but database values win.

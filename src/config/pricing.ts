@@ -30,117 +30,56 @@ export type PricingProduct = {
 };
 
 /**
- * Default demo catalog. Replace with your real products when launching.
- * Keys MUST match what the pricing UI sends as product_id.
+ * The product catalog. Keys MUST match what the pricing UI sends as `product_id`.
+ *
+ * One credit = one illustrated page, so `credits` reads directly as pages.
+ *
+ * `creditsValidDays` is the whole difference between the two kinds of product
+ * here, and it is the reason both exist:
+ *
+ * - **Credit packs** (`credits_15`, `credits_100`) are one-time purchases and
+ *   deliberately omit it. `calculateCreditExpirationTime` returns null for a
+ *   missing/zero value, so a top-up never expires — money the user spent stays
+ *   theirs until they spend it.
+ * - **The subscription** sets it, so each month's credits lapse with the period
+ *   they were granted for and cannot be stockpiled.
  */
 export const pricingCatalog: Record<string, PricingProduct> = {
-  starter_monthly: {
-    productId: 'starter_monthly',
-    productName: 'Starter',
-    planName: 'Starter',
-    description: 'Starter Monthly',
+  storyteller_monthly: {
+    productId: 'storyteller_monthly',
+    productName: 'Storyteller',
+    planName: 'Storyteller Monthly',
+    description: 'Storyteller Monthly — 100 credits every month',
     type: PaymentType.SUBSCRIPTION,
-    priceInCents: 900,
+    priceInCents: 2999,
     currency: 'usd',
-    credits: 5000,
+    credits: 100,
+    creditsValidDays: 30,
     plan: {
-      name: 'Starter',
+      name: 'Storyteller',
       interval: PaymentInterval.MONTH,
       intervalCount: 1,
     },
   },
-  pro_monthly: {
-    productId: 'pro_monthly',
-    productName: 'Pro',
-    planName: 'Pro',
-    description: 'Pro Monthly',
-    type: PaymentType.SUBSCRIPTION,
-    priceInCents: 2900,
-    currency: 'usd',
-    credits: 50000,
-    plan: { name: 'Pro', interval: PaymentInterval.MONTH, intervalCount: 1 },
-  },
-  enterprise_monthly: {
-    productId: 'enterprise_monthly',
-    productName: 'Enterprise',
-    planName: 'Enterprise',
-    description: 'Enterprise Monthly',
-    type: PaymentType.SUBSCRIPTION,
-    priceInCents: 9900,
-    currency: 'usd',
-    credits: 500000,
-    plan: {
-      name: 'Enterprise',
-      interval: PaymentInterval.MONTH,
-      intervalCount: 1,
-    },
-  },
-  starter_yearly: {
-    productId: 'starter_yearly',
-    productName: 'Starter',
-    planName: 'Starter',
-    description: 'Starter Yearly',
-    type: PaymentType.SUBSCRIPTION,
-    priceInCents: 8600,
-    currency: 'usd',
-    credits: 60000,
-    plan: { name: 'Starter', interval: PaymentInterval.YEAR, intervalCount: 1 },
-  },
-  pro_yearly: {
-    productId: 'pro_yearly',
-    productName: 'Pro',
-    planName: 'Pro',
-    description: 'Pro Yearly',
-    type: PaymentType.SUBSCRIPTION,
-    priceInCents: 27800,
-    currency: 'usd',
-    credits: 600000,
-    plan: { name: 'Pro', interval: PaymentInterval.YEAR, intervalCount: 1 },
-  },
-  enterprise_yearly: {
-    productId: 'enterprise_yearly',
-    productName: 'Enterprise',
-    planName: 'Enterprise',
-    description: 'Enterprise Yearly',
-    type: PaymentType.SUBSCRIPTION,
-    priceInCents: 95000,
-    currency: 'usd',
-    credits: 6000000,
-    plan: {
-      name: 'Enterprise',
-      interval: PaymentInterval.YEAR,
-      intervalCount: 1,
-    },
-  },
-  starter_lifetime: {
-    productId: 'starter_lifetime',
-    productName: 'Starter',
-    planName: 'Starter Lifetime',
-    description: 'Starter Lifetime',
+  credits_15: {
+    productId: 'credits_15',
+    productName: 'Starter Pack',
+    planName: 'Starter Pack',
+    description: '15 credits — 15 illustrated pages',
     type: PaymentType.ONE_TIME,
-    priceInCents: 14900,
+    priceInCents: 499,
     currency: 'usd',
-    credits: 100000,
+    credits: 15,
   },
-  pro_lifetime: {
-    productId: 'pro_lifetime',
-    productName: 'Pro',
-    planName: 'Pro Lifetime',
-    description: 'Pro Lifetime',
+  credits_100: {
+    productId: 'credits_100',
+    productName: 'Value Pack',
+    planName: 'Value Pack',
+    description: '100 credits — 100 illustrated pages',
     type: PaymentType.ONE_TIME,
-    priceInCents: 49900,
+    priceInCents: 2999,
     currency: 'usd',
-    credits: 1000000,
-  },
-  enterprise_lifetime: {
-    productId: 'enterprise_lifetime',
-    productName: 'Enterprise',
-    planName: 'Enterprise Lifetime',
-    description: 'Enterprise Lifetime',
-    type: PaymentType.ONE_TIME,
-    priceInCents: 199900,
-    currency: 'usd',
-    credits: 10000000,
+    credits: 100,
   },
 };
 

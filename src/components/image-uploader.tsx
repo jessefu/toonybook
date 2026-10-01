@@ -13,6 +13,9 @@ export interface ImageUploaderValue {
   id: string;
   preview: string;
   url?: string;
+  /** Storage key of the uploaded object — the safe way to reference it later,
+   * since server-side consumers can resolve it without trusting a URL. */
+  key?: string;
   status: UploadStatus;
   size?: number;
 }
@@ -60,7 +63,10 @@ const uploadImageFile = async (file: File) => {
     throw new Error(result.message || 'Upload failed');
   }
 
-  return result.data.urls[0] as string;
+  return {
+    url: result.data.urls[0] as string,
+    key: result.data.results?.[0]?.key as string | undefined,
+  };
 };
 
 export function ImageUploader({
@@ -150,10 +156,11 @@ export function ImageUploader({
     isInternalChangeRef.current = true;
 
     onChangeRef.current?.(
-      items.map(({ id, preview, url, status, size }) => ({
+      items.map(({ id, preview, url, key, status, size }) => ({
         id,
         preview,
         url,
+        key,
         status,
         size,
       }))
@@ -177,6 +184,7 @@ export function ImageUploader({
             file,
             size: file.size,
             url: undefined,
+            key: undefined,
             status: 'uploading' as UploadStatus,
             uploadKey,
           };
@@ -184,7 +192,7 @@ export function ImageUploader({
       );
 
       uploadImageFile(file)
-        .then((url) => {
+        .then(({ url, key }) => {
           setItems((prev) =>
             prev.map((item) => {
               if (item.id !== id) return item;
@@ -196,6 +204,7 @@ export function ImageUploader({
                 ...item,
                 preview: url,
                 url,
+                key,
                 status: 'uploaded' as UploadStatus,
                 file: undefined,
               };
@@ -300,7 +309,7 @@ export function ImageUploader({
     Promise.all(
       newItems.map(async (item) => {
         try {
-          const url = await uploadImageFile(item.file as File);
+          const { url, key } = await uploadImageFile(item.file as File);
           setItems((prev) =>
             prev.map((current) => {
               if (current.id !== item.id) return current;
@@ -318,6 +327,7 @@ export function ImageUploader({
                 ...current,
                 preview: url,
                 url,
+                key,
                 status: 'uploaded' as UploadStatus,
                 file: undefined,
               };

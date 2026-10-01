@@ -63,6 +63,50 @@ export const apiPatch = <T = void>(url: string, body?: unknown) =>
 export const apiDelete = <T = void>(url: string) =>
   request<T>(url, { method: 'DELETE' });
 
+export interface DownloadResult {
+  blob: Blob;
+  /** From Content-Disposition, so the server's name (e.g. the book title) wins. */
+  filename?: string;
+}
+
+/**
+ * Pull a binary response (the printable PDF export).
+ *
+ * Separate from request() because that one always parses JSON. Endpoints that
+ * serve files answer with a real HTTP error status plus a JSON body instead of
+ * the usual 200 + `code: -1` envelope, so both shapes are handled here.
+ */
+export async function apiDownload(url: string): Promise<DownloadResult> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const json = await res
+      .json()
+      .catch(() => ({ message: res.statusText || 'Download failed' }));
+    throw new ApiError(
+      res.status,
+      json.message || 'Download failed',
+      json.data
+    );
+  }
+
+  // RFC 5987: filename* carries the UTF-8 name, filename is the ASCII fallback.
+  const disposition = res.headers.get('content-disposition') ?? '';
+  const utf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  const plain = disposition.match(/filename="([^"]+)"/i)?.[1];
+  let filename: string | undefined;
+  if (utf8) {
+    try {
+      filename = decodeURIComponent(utf8);
+    } catch {
+      filename = plain;
+    }
+  } else {
+    filename = plain;
+  }
+
+  return { blob: await res.blob(), filename };
+}
+
 // Query-string builder for paginated list endpoints.
 export function pageQuery(base: string, p: PageParams) {
   const params = new URLSearchParams({

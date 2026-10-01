@@ -123,21 +123,17 @@ export class FalProvider implements AIProvider {
     model?: string;
     mediaType?: AIMediaType;
   }): Promise<AITaskResult> {
-    const queryModel = this.getQueryModel(model);
-
-    const statusUrl = `${this.baseUrl}/${queryModel}/requests/${taskId}/status`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Authorization: `Key ${this.configs.apiKey}`,
     };
 
-    const statusResp = await fetch(statusUrl, { method: 'GET', headers });
+    const { queryModel, statusData } = await this.queryStatus({
+      taskId,
+      model,
+      headers,
+    });
 
-    if (!statusResp.ok) {
-      throw new Error(`request failed with status: ${statusResp.status}`);
-    }
-
-    const statusData = await statusResp.json();
     const taskStatus = this.mapStatus(statusData.status);
 
     if (taskStatus !== AITaskStatus.SUCCESS) {
@@ -153,37 +149,39 @@ export class FalProvider implements AIProvider {
       };
     }
 
-    const resultUrl = `${this.baseUrl}/${queryModel}/requests/${taskId}`;
-    const resultResp = await fetch(resultUrl, { method: 'GET', headers });
+    const resultResp = await fetch(
+      `${this.baseUrl}/${queryModel}/requests/${taskId}`,
+      { method: 'GET', headers }
+    );
 
     if (!resultResp.ok) {
       throw new Error(`request failed with status: ${resultResp.status}`);
     }
 
-    const data = await resultResp.json();
+    const raw = await resultResp.json();
 
     let images: AIImage[] | undefined = undefined;
     let videos: AIVideo[] | undefined = undefined;
 
     if (mediaType === AIMediaType.VIDEO) {
-      if (data.video && data.video.url) {
+      if (raw.video && raw.video.url) {
         videos = [
           {
             id: '',
             createTime: new Date(),
-            videoUrl: data.video.url,
+            videoUrl: raw.video.url,
           },
         ];
-      } else if (data.videos && Array.isArray(data.videos)) {
-        videos = data.videos.map((video: any) => ({
+      } else if (raw.videos && Array.isArray(raw.videos)) {
+        videos = raw.videos.map((video: any) => ({
           id: '',
           createTime: new Date(),
           videoUrl: video.url,
         }));
       }
     } else {
-      if (data.images && Array.isArray(data.images)) {
-        images = data.images.map((image: any) => ({
+      if (raw.images && Array.isArray(raw.images)) {
+        images = raw.images.map((image: any) => ({
           id: '',
           createTime: new Date(),
           imageUrl: image.url,
@@ -191,7 +189,7 @@ export class FalProvider implements AIProvider {
       }
     }
 
-    if (taskStatus === AITaskStatus.SUCCESS && this.configs.customStorage) {
+    if (this.configs.customStorage) {
       if (images && images.length > 0) {
         const filesToSave: AIFile[] = [];
         images.forEach((image, index) => {
@@ -262,8 +260,52 @@ export class FalProvider implements AIProvider {
         errorMessage: '',
         createTime: new Date(),
       },
-      taskResult: data,
+      taskResult: raw,
     };
+  }
+
+  /**
+   * Fetch a request's status, settling which path it lives under.
+   *
+   * A request is *submitted* to the full endpoint id (`fal-ai/nano-banana/edit`)
+   * but read back from the app: fal's own client rebuilds status/result URLs as
+   * `owner/alias` and drops everything after it, so `fal-ai/nano-banana/edit`
+   * is polled at `fal-ai/nano-banana/requests/{id}/status`. Try that first; a
+   * 404 falls back to the full path in case an endpoint ever needs it.
+   */
+  private async queryStatus({
+    taskId,
+    model,
+    headers,
+  }: {
+    taskId: string;
+    model?: string;
+    headers: Record<string, string>;
+  }): Promise<{ queryModel: string; statusData: any }> {
+    if (!model) {
+      throw new Error('model is required to query a request');
+    }
+
+    const candidates = [this.getQueryModel(model), model].filter(
+      (candidate, i, all) => candidate && all.indexOf(candidate) === i
+    );
+
+    for (const candidate of candidates) {
+      const resp = await fetch(
+        `${this.baseUrl}/${candidate}/requests/${taskId}/status`,
+        { method: 'GET', headers }
+      );
+      if (resp.ok) {
+        return { queryModel: candidate, statusData: await resp.json() };
+      }
+      // Only a 404 means "wrong path" — anything else is a real failure and
+      // retrying it under another path would just hide it.
+      if (resp.status !== 404) {
+        throw new Error(`request failed with status: ${resp.status}`);
+      }
+    }
+
+    throw new Error(`request failed with status: 404`);
   }
 
   private mapStatus(status: string): AITaskStatus {
@@ -310,6 +352,24 @@ export class FalProvider implements AIProvider {
     }
 
     input = { ...input, ...options };
+
+    // Unwrap an `input` object into the top level.
+    //
+    // The image module builds reference-image params in the envelope shape the
+    // Kie provider needs (`{ input: { image_urls: [...] } }`). Fal takes the
+    // model's own input fields at the top of the body instead, so passing that
+    // envelope through would ship a stray `input` key the endpoint does not
+    // know — and the reference images would be dropped without an error.
+    if (
+      options.input &&
+      typeof options.input === 'object' &&
+      !Array.isArray(options.input)
+    ) {
+      Object.assign(input, options.input);
+      delete input.input;
+      // Re-asserted: `options.input` must not be able to clobber the prompt.
+      input.prompt = prompt;
+    }
 
     if (options.image_input && Array.isArray(options.image_input)) {
       if (['fal-ai/kling-video/o1/video-to-video/edit'].includes(model)) {

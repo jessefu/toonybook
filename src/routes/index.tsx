@@ -8,8 +8,10 @@ import { CTA } from '@/blocks/cta';
 import { FAQ } from '@/blocks/faq';
 import { Features } from '@/blocks/features';
 import { Footer } from '@/blocks/footer';
+import { Gallery } from '@/blocks/gallery';
 import { Header } from '@/blocks/header';
 import { Hero } from '@/blocks/hero';
+import { HowItWorks } from '@/blocks/how-it-works';
 import { Pricing } from '@/blocks/pricing';
 import { SupportWidget } from '@/blocks/support-widget';
 import { getBlogPostsFn } from '@/content/posts/server';
@@ -27,6 +29,8 @@ function HomePage() {
       <Header />
       <main>
         <Hero />
+        <HowItWorks />
+        <Gallery />
         <Features />
         <Pricing />
         <FAQ />

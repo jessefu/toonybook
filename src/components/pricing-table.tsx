@@ -4,17 +4,17 @@ import { useState, type ComponentType, type SVGProps } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
 
+import { Link } from '@/core/i18n/navigation';
 import { apiPost } from '@/lib/api-client';
 import { currentPathWithQuery } from '@/lib/redirect';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
 export type PricingFeature =
-  | string
-  | { icon?: IconComponent; label: string; tooltip?: string };
+  string | { icon?: IconComponent; label: string; tooltip?: string };
 
 export interface PricingPlan {
   id: string;
@@ -28,6 +28,12 @@ export interface PricingPlan {
   badge?: string;
   features: PricingFeature[];
   buttonText?: string;
+  /**
+   * Where the CTA goes instead of checkout. For plans there is nothing to buy —
+   * a free tier — so the card links somewhere useful rather than opening a
+   * payment provider for a $0 order.
+   */
+  href?: string;
   productId?: string;
   productName?: string;
   paymentProvider?: string;
@@ -175,16 +181,30 @@ export function PricingTable({
             )}
 
             {/* CTA — full-width pill */}
-            <Button
-              variant={plan.featured ? 'default' : 'outline'}
-              className="h-10 w-full rounded-full text-sm font-medium"
-              onClick={() => handleCheckout(plan)}
-              disabled={loadingId === plan.id}
-            >
-              {loadingId === plan.id
-                ? m['common.pricing.processing']()
-                : plan.buttonText || m['common.pricing.get_started']()}
-            </Button>
+            {plan.href ? (
+              <Link
+                href={plan.href}
+                className={cn(
+                  buttonVariants({
+                    variant: plan.featured ? 'default' : 'outline',
+                  }),
+                  'h-10 w-full rounded-full text-sm font-medium'
+                )}
+              >
+                {plan.buttonText || m['common.pricing.get_started']()}
+              </Link>
+            ) : (
+              <Button
+                variant={plan.featured ? 'default' : 'outline'}
+                className="h-10 w-full rounded-full text-sm font-medium"
+                onClick={() => handleCheckout(plan)}
+                disabled={loadingId === plan.id}
+              >
+                {loadingId === plan.id
+                  ? m['common.pricing.processing']()
+                  : plan.buttonText || m['common.pricing.get_started']()}
+              </Button>
+            )}
 
             {/* Features */}
             <ul className="mt-8 space-y-3">

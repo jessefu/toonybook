@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import {
+  BookOpenText,
   Coins,
   CreditCard,
   Home,
@@ -26,6 +27,12 @@ function SettingsLayout() {
       href: '/settings',
       label: m['settings.nav.overview'](),
       icon: LayoutDashboard,
+      group,
+    },
+    {
+      href: '/settings/storybooks',
+      label: m['settings.nav.storybooks'](),
+      icon: BookOpenText,
       group,
     },
     {

@@ -229,6 +229,44 @@ export const testSpecs: Record<string, TestSpec> = {
       },
     ],
   },
+  kie: {
+    group: 'kie',
+    fields: [
+      {
+        name: 'model',
+        label: 'Model',
+        type: 'text',
+        defaultValue: 'google/nano-banana',
+        required: true,
+      },
+      {
+        name: 'prompt',
+        label: 'Prompt',
+        type: 'textarea',
+        defaultValue: 'a small red cube, product photography',
+        required: true,
+      },
+    ],
+  },
+  gemini: {
+    group: 'gemini',
+    fields: [
+      {
+        name: 'model',
+        label: 'Model',
+        type: 'text',
+        defaultValue: 'gemini-2.0-flash-preview-image-generation',
+        required: true,
+      },
+      {
+        name: 'prompt',
+        label: 'Prompt',
+        type: 'textarea',
+        defaultValue: 'a small red cube, product photography',
+        required: true,
+      },
+    ],
+  },
 };
 
 export function getTestSpec(group: string): TestSpec | undefined {

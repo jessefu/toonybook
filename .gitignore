@@ -65,3 +65,6 @@ package-lock.json
 
 # Runtime image uploads (no-storage local fallback)
 /public/uploads/
+# Same fallback, for files written by core/ai's saveFiles (modules/storage/service.ts).
+# Curated demo art lives in /public/imgs/generated/, which IS tracked.
+/public/generated/

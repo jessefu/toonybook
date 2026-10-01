@@ -9,6 +9,8 @@
  */
 
 import { FalProvider } from '@/core/ai/fal';
+import { GeminiProvider } from '@/core/ai/gemini';
+import { KieProvider } from '@/core/ai/kie';
 import { ReplicateProvider } from '@/core/ai/replicate';
 import { AIMediaType } from '@/core/ai/types';
 import { ResendProvider } from '@/core/email/resend';
@@ -58,6 +60,10 @@ export async function runTest(
         return await testReplicate(inputs, configs);
       case 'fal':
         return await testFal(inputs, configs);
+      case 'kie':
+        return await testKie(inputs, configs);
+      case 'gemini':
+        return await testGemini(inputs, configs);
       default:
         return { success: false, message: `No test available for "${group}"` };
     }
@@ -498,5 +504,66 @@ async function testFal(
     success: true,
     message: 'Fal accepted the request',
     details: { 'Task ID': result.taskId, Status: result.taskStatus },
+  };
+}
+
+async function testKie(
+  inputs: Record<string, string>,
+  configs: Record<string, string>
+): Promise<TestResult> {
+  const missing = need(configs, ['kie_api_key']);
+  if (missing) return { success: false, message: missing };
+
+  // Kie is task-based: a 200 here only proves the key, the model id and the
+  // account balance were accepted — the image is produced asynchronously, so
+  // the test stops at the task id.
+  const provider = new KieProvider({ apiKey: configs.kie_api_key });
+  const result = await provider.generate({
+    params: {
+      mediaType: AIMediaType.IMAGE,
+      model: inputs.model,
+      prompt: inputs.prompt,
+    },
+  });
+  return {
+    success: true,
+    message: 'Kie.ai accepted the request (image is generated asynchronously)',
+    details: {
+      Model: inputs.model,
+      'Task ID': result.taskId,
+      Status: result.taskStatus,
+    },
+  };
+}
+
+async function testGemini(
+  inputs: Record<string, string>,
+  configs: Record<string, string>
+): Promise<TestResult> {
+  const missing = need(configs, ['gemini_api_key']);
+  if (missing) return { success: false, message: missing };
+
+  const provider = new GeminiProvider({
+    apiKey: configs.gemini_api_key,
+    // Gemini hands back image bytes inline, so core requires an upload hook.
+    // This test only proves the credentials and model work, so it stubs the
+    // upload rather than writing a real object to storage.
+    uploadFile: async ({ key }) => ({ url: `settings-test://${key}` }),
+  });
+  const result = await provider.generate({
+    params: {
+      mediaType: AIMediaType.IMAGE,
+      model: inputs.model,
+      prompt: inputs.prompt,
+    },
+  });
+  return {
+    success: true,
+    message: 'Gemini returned an image (storage not exercised by this test)',
+    details: {
+      Model: inputs.model,
+      Status: result.taskStatus,
+      Type: result.taskInfo?.images?.[0]?.imageType || '',
+    },
   };
 }

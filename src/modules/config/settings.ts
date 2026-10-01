@@ -154,6 +154,13 @@ export function getSettingGroups(): SettingGroup[] {
 
     // AI
     {
+      name: 'ai_defaults',
+      title: 'Defaults',
+      description:
+        'Which provider each feature uses. "Auto" picks the first provider that has credentials.',
+      tab: 'ai',
+    },
+    {
       name: 'openai',
       title: 'OpenAI',
       description: 'OpenAI (or compatible) API',
@@ -172,6 +179,24 @@ export function getSettingGroups(): SettingGroup[] {
       tab: 'ai',
     },
     { name: 'fal', title: 'Fal', description: 'Fal AI API', tab: 'ai' },
+    {
+      name: 'kie',
+      title: 'Kie.ai',
+      description: 'Kie.ai API (async image/video/music)',
+      tab: 'ai',
+    },
+    {
+      name: 'gemini',
+      title: 'Google Gemini',
+      description: 'Gemini API (image generation)',
+      tab: 'ai',
+    },
+    {
+      name: 'storybook',
+      title: 'Storybook',
+      description: 'Illustration style and printable PDF export',
+      tab: 'ai',
+    },
 
     // Analytics
     {
@@ -269,7 +294,8 @@ export function getSettings(): Setting[] {
       name: 'initial_credits_amount',
       title: 'Credits amount',
       type: 'number',
-      placeholder: '100',
+      placeholder: '10',
+      tip: 'One credit = one illustrated page. The pricing page advertises this number as the free tier, so changing it changes what "Free" promises.',
       group: 'credit',
       tab: 'general',
     },
@@ -277,7 +303,8 @@ export function getSettings(): Setting[] {
       name: 'initial_credits_valid_days',
       title: 'Valid days',
       type: 'number',
-      placeholder: '365',
+      placeholder: '0',
+      tip: 'Days before the bonus expires. 0 means it never expires.',
       group: 'credit',
       tab: 'general',
     },
@@ -478,7 +505,7 @@ export function getSettings(): Setting[] {
       name: 'creem_product_ids_mapping',
       title: 'Product IDs Mapping',
       type: 'textarea',
-      placeholder: '{"starter_monthly": "prod_xxx"}',
+      placeholder: '{"storyteller_monthly": "prod_xxx"}',
       tip: 'Map the product_id in pricing catalog to the product ID created in Creem. Must be a valid JSON object.',
       group: 'creem',
       tab: 'payment',
@@ -769,6 +796,99 @@ export function getSettings(): Setting[] {
       tab: 'storage',
     },
 
+    // ─── AI / Defaults ───────────────────────────────────────────────
+    {
+      name: 'ai_text_provider',
+      title: 'Text Provider',
+      type: 'select',
+      group: 'ai_defaults',
+      tab: 'ai',
+      defaultValue: 'auto',
+      options: [
+        { label: 'Auto', value: 'auto' },
+        { label: 'OpenAI', value: 'openai' },
+        { label: 'Anthropic', value: 'anthropic' },
+        { label: 'Kie.ai', value: 'kie' },
+        { label: 'Built-in (no LLM)', value: 'builtin' },
+      ],
+      tip: 'Used for story text and other chat completions. "Auto" picks the first provider that has an API key (OpenAI, then Anthropic, then Kie.ai). "Built-in" skips the LLM and uses offline content.',
+    },
+    {
+      name: 'ai_text_model',
+      title: 'Text Model',
+      type: 'text',
+      placeholder: 'gpt-4o-mini',
+      group: 'ai_defaults',
+      tab: 'ai',
+      tip: 'Must be a model the selected provider serves. OpenAI: "gpt-4o-mini". Anthropic: "claude-sonnet-4-5". Kie.ai: a slug its chat endpoint accepts — "gpt-5-2" is known to work; most of Kie\'s catalogue is rejected with "The model is not supported". Blank uses the provider\'s default.',
+    },
+    {
+      name: 'ai_image_provider',
+      title: 'Image Provider',
+      type: 'select',
+      group: 'ai_defaults',
+      tab: 'ai',
+      defaultValue: 'auto',
+      options: [
+        { label: 'Auto', value: 'auto' },
+        { label: 'Replicate', value: 'replicate' },
+        { label: 'Fal', value: 'fal' },
+        { label: 'Kie.ai', value: 'kie' },
+        { label: 'Google Gemini', value: 'gemini' },
+      ],
+      tip: 'Replicate, Fal and Kie.ai run asynchronously; Gemini returns the image immediately. Required — image features fail fast when no provider has credentials.',
+    },
+    {
+      name: 'ai_image_model',
+      title: 'Image Model',
+      type: 'text',
+      placeholder: 'black-forest-labs/flux-schnell',
+      group: 'ai_defaults',
+      tab: 'ai',
+      tip: 'Must be a model id the selected provider understands — Replicate: "owner/name", Fal: "fal-ai/...", Kie.ai: "vendor/name" (e.g. "google/nano-banana", "seedream/5-lite-text-to-image"). Blank uses the provider\'s own default.',
+    },
+    {
+      name: 'ai_image_edit_model',
+      title: 'Reference-Image Model',
+      type: 'text',
+      placeholder: 'google/nano-banana-edit',
+      group: 'ai_defaults',
+      tab: 'ai',
+      tip: 'Used instead of the Image Model whenever a request supplies reference photos (e.g. illustrated books built from a child\'s photos). Must be an image-to-image model — "google/nano-banana" cannot take photos at all. Leave blank to disable photo-based generation; requests that send photos will fail rather than silently ignore them.',
+    },
+    {
+      name: 'ai_image_input_field',
+      title: 'Reference-Image Field',
+      type: 'text',
+      placeholder: 'image_urls',
+      group: 'ai_defaults',
+      tab: 'ai',
+      tip: 'Advanced. The input field the reference-image model expects — vendors disagree ("image_urls", "image_input", "reference_image_urls", "image_url", "input_image"). Blank infers it from the model id. If a photo-based generation comes back looking nothing like the photo, this is the field to check against the model\'s API docs.',
+    },
+
+    // ─── AI / Storybook ──────────────────────────────────────────────
+    // The placeholder mirrors DEFAULT_ART_STYLE in modules/storybook/service.ts.
+    // Duplicated on purpose: modules must not import each other's internals.
+    {
+      name: 'ai_image_style',
+      title: 'Fallback Illustration Style',
+      type: 'textarea',
+      placeholder:
+        'delicate watercolor storybook illustration, semi-realistic proportions, fine brush detail, soft natural light, muted elegant palette, no text, safe for children',
+      group: 'storybook',
+      tab: 'ai',
+      tip: 'Fallback style prompt for illustrated books. A book created from the form carries its own illustration style (chosen in the picker), which wins; this is used only when no style was chosen — older books, and API callers that omit the field. Blank uses the default shown above. Wording matters a lot: "children picture book" and "soft pastel" push the models toward chibi/Q-version figures with oversized heads, which reads as a cartoon rather than an illustrated book.',
+    },
+    {
+      name: 'pdf_cjk_font_url',
+      title: 'CJK Font URL',
+      type: 'text',
+      placeholder: 'https://fonts.gstatic.com/s/notosanssc/....ttf',
+      group: 'storybook',
+      tab: 'ai',
+      tip: 'Font embedded in the printable PDF so Chinese text renders (PDF viewers cannot synthesise CJK from the built-in fonts). Must be a static .ttf or .otf — not .woff2. Blank resolves a Noto Sans SC TTF from Google Fonts; the file is downloaded once and then cached in storage, so set this only if the server cannot reach fonts.googleapis.com.',
+    },
+
     // ─── AI / OpenAI ─────────────────────────────────────────────────
     {
       name: 'openai_base_url',
@@ -822,6 +942,27 @@ export function getSettings(): Setting[] {
       type: 'password',
       placeholder: 'xxx',
       group: 'fal',
+      tab: 'ai',
+    },
+
+    // ─── AI / Kie.ai ─────────────────────────────────────────────────
+    {
+      name: 'kie_api_key',
+      title: 'API Key',
+      type: 'password',
+      placeholder: 'xxx',
+      group: 'kie',
+      tab: 'ai',
+      tip: 'From kie.ai/api-key. Keys may carry hourly/daily quota caps and an IP whitelist — if requests start failing with 401/429, check both.',
+    },
+
+    // ─── AI / Google Gemini ──────────────────────────────────────────
+    {
+      name: 'gemini_api_key',
+      title: 'API Key',
+      type: 'password',
+      placeholder: 'AIza...',
+      group: 'gemini',
       tab: 'ai',
     },
 

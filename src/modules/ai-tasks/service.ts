@@ -39,6 +39,7 @@ export async function createTask(params: {
       prompt,
       status: AITaskStatus.PENDING,
       costCredits: costCredits || 0,
+      options: options ? JSON.stringify(options) : null,
     };
 
     const [task] = await tx.insert(aiTask).values(taskData).returning();
@@ -62,10 +63,9 @@ export async function createTask(params: {
       if (result.consumedCredit) {
         await tx
           .update(aiTask)
-          .set({
-            taskInfo: JSON.stringify({ creditId: result.consumedCredit.id }),
-          })
+          .set({ creditId: result.consumedCredit.id })
           .where(eq(aiTask.id, task.id));
+        task.creditId = result.consumedCredit.id;
       }
     }
 
@@ -99,17 +99,68 @@ export async function updateTask(params: {
 
   await db().update(aiTask).set(updateData).where(eq(aiTask.id, taskId));
 
-  // Revoke credits on failure
-  if (status === AITaskStatus.FAILED && task.taskInfo) {
-    try {
-      const info = JSON.parse(task.taskInfo as string);
-      if (info.creditId) {
-        await revoke(info.creditId);
+  // Revoke credits on failure. `revoke()` is idempotent (it only matches a
+  // still-ACTIVE consume record), so a repeated FAILED update is harmless.
+  if (status === AITaskStatus.FAILED) {
+    const creditId = task.creditId || readLegacyCreditId(task.taskInfo);
+    if (creditId) {
+      try {
+        await revoke(creditId);
+      } catch {
+        // Ignore — a failed refund must not mask the original failure.
       }
-    } catch {
-      // Ignore parse errors
     }
   }
+}
+
+/** Credit IDs used to live inside the taskInfo JSON blob; still read for old rows. */
+function readLegacyCreditId(taskInfo: unknown): string | null {
+  if (!taskInfo) return null;
+  try {
+    const info = typeof taskInfo === 'string' ? JSON.parse(taskInfo) : taskInfo;
+    return info?.creditId || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Shallow-merge a patch into the task's `taskInfo` JSON blob.
+ *
+ * Used by async pipelines to record progress between polls without clobbering
+ * unrelated keys.
+ */
+export async function updateTaskInfo(
+  taskId: string,
+  patch: Record<string, any>
+): Promise<Record<string, any>> {
+  const [task] = await db()
+    .select()
+    .from(aiTask)
+    .where(eq(aiTask.id, taskId))
+    .limit(1);
+
+  if (!task) throw new Error('Task not found');
+
+  let current: Record<string, any> = {};
+  if (task.taskInfo) {
+    try {
+      current =
+        typeof task.taskInfo === 'string'
+          ? JSON.parse(task.taskInfo)
+          : (task.taskInfo as Record<string, any>);
+    } catch {
+      current = {};
+    }
+  }
+
+  const next = { ...current, ...patch };
+  await db()
+    .update(aiTask)
+    .set({ taskInfo: JSON.stringify(next) })
+    .where(eq(aiTask.id, taskId));
+
+  return next;
 }
 
 /**

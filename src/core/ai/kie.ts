@@ -138,13 +138,23 @@ export class KieProvider implements AIProvider {
     let payload: any = {
       model: params.model,
       callBackUrl: params.callbackUrl,
-      input: {
-        prompt: params.prompt,
-      },
+      input: {},
     };
 
     if (params.options) {
       const options = params.options;
+      // Every Kie image model names its reference-image key differently
+      // (image_urls / image_input / reference_image_urls / input_image), so a
+      // raw passthrough is the only abstraction that doesn't go stale. Callers
+      // that know the model's schema use this rather than waiting for a
+      // provider change.
+      if (
+        options.input &&
+        typeof options.input === 'object' &&
+        !Array.isArray(options.input)
+      ) {
+        Object.assign(payload.input, options.input);
+      }
       if (options.image_input && Array.isArray(options.image_input)) {
         payload.input.image_input = options.image_input;
       }
@@ -158,6 +168,9 @@ export class KieProvider implements AIProvider {
         payload.input.output_format = options.output_format;
       }
     }
+
+    // Assigned last: the passthrough above must not be able to clobber it.
+    payload.input.prompt = params.prompt;
 
     const resp = await fetch(apiUrl, {
       method: 'POST',

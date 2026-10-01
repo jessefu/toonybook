@@ -9,7 +9,7 @@ export function CTA() {
   return (
     <section className="px-4 pb-24 sm:pb-24">
       <div className="mx-auto max-w-5xl">
-        <div className="rounded-3xl border border-dashed px-6 py-12 text-center sm:px-10 sm:py-16">
+        <div className="bg-primary/5 border-primary/20 rounded-3xl border border-dashed px-6 py-12 text-center sm:px-10 sm:py-16">
           <h2 className="mx-auto max-w-3xl font-serif text-4xl leading-[1.1] font-medium tracking-tight sm:text-5xl lg:text-5xl">
             {m['landing.cta.headline']()}
           </h2>
