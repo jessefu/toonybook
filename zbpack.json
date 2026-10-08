@@ -1,0 +1,4 @@
+{
+  "build_command": "pnpm build",
+  "output_dir": ".zeabur/output"
+}
