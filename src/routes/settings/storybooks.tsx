@@ -858,6 +858,13 @@ function StorybooksPage() {
             {books.map((book) => {
               const openable = book.status === 'success';
               const href = `/settings/storybooks/${book.id}`;
+              // The cover opens the printable PDF itself — the browser's own
+              // viewer, full toolbar, no app chrome around it — while the title
+              // still goes to the reader, which is where the story text and the
+              // page-by-page view live. `inline=1` is what keeps this a preview
+              // instead of a download; see the route for the header it sets.
+              const pdfHref = `/api/storybooks/${book.id}/pdf?inline=1#view=FitH`;
+              const openPdfLabel = m['settings.storybooks.card_open_pdf']();
               const title = book.title ?? book.prompt;
               const style = storybookStyleLabel(book.storyStyle);
               const art = artStyleLabel(book.artStyle);
@@ -909,11 +916,20 @@ function StorybooksPage() {
                 >
                   {/* Only the cover and the title navigate. The action row sits
                       in the same card, and a button nested inside a link is
-                      both invalid markup and impossible to click. */}
+                      both invalid markup and impossible to click.
+                      The cover is a plain anchor, not the router's Link: it
+                      points at an API route, which has no locale-prefixed
+                      variant and must not be intercepted by the router. */}
                   {openable ? (
-                    <Link href={href} className="block">
+                    <a
+                      href={pdfHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                      title={openPdfLabel}
+                    >
                       {cover}
-                    </Link>
+                    </a>
                   ) : (
                     cover
                   )}

@@ -65,3 +65,22 @@ export const STORYBOOK_STYLE_PRESETS: Record<StorybookStyle, string> = {
     'One short line per page, with real white space around it. ' +
     'Pacing: let the book breathe. Each page is a single image-thought; the turn comes near the end, and the final line stays an image or a question rather than an answer.',
 };
+
+/**
+ * Appended to every story prompt, whatever the style.
+ *
+ * The styles describe craft, and most of them say nothing about what the story
+ * may be *about* — only `heartwarming` rules out villains and violence. Without
+ * a shared tail, five of the six styles leave the model free to take a violent
+ * or frightening idea literally. This is the prompt-side counterpart to the
+ * moderation filter in `modules/moderation`: that one refuses text we would not
+ * print, this one keeps the model from writing it in the first place.
+ *
+ * Written as an audience rule rather than a list of banned topics, because a
+ * list in a prompt reads as a suggestion of what to include.
+ */
+export const STORY_SAFETY_CONTRACT =
+  'This book is read aloud to a child aged 2 to 10, often at bedtime. ' +
+  'Keep every page emotionally safe: no violence, no weapons, no blood, no death, no scary imagery, no sexual content, no drugs or alcohol, no hateful language, and no profanity. ' +
+  'Where the idea asks for something on that list, keep the characters and the feeling of the idea and leave the harm out — a story about a worry, a storm, or a lost toy is welcome; a story about someone being hurt is not. ' +
+  'If the idea cannot be told for a young child at all, write the gentlest possible story on the same theme instead.';

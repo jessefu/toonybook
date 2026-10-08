@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 
 import { getAuth } from '@/core/auth';
+import { moderateAll, ModerationError } from '@/modules/moderation/service';
 import { draftStory } from '@/modules/storybook/service';
 import {
   DEFAULT_STORYBOOK_STYLE,
@@ -11,6 +12,8 @@ import {
 } from '@/modules/storybook/styles';
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
+
+import { moderationMessage } from './-moderation';
 
 /**
  * Step 1 of the two-step flow: write the story text only.
@@ -54,9 +57,28 @@ async function POST({ request }: { request: Request }) {
       return respErr(parsed.error.issues[0]?.message || 'Invalid input');
     }
 
+    // Content moderation, before anything else happens. The idea is the field
+    // the user actually writes, but the names travel into the printed book too,
+    // so they are checked with it.
+    const verdict = moderateAll([
+      parsed.data.idea,
+      parsed.data.childName,
+      ...(parsed.data.characterNames ?? []),
+    ]);
+    if (!verdict.allowed) {
+      console.warn('storybook draft rejected by moderation:', verdict.matches);
+      return respErr(moderationMessage(verdict.category, request));
+    }
+
     const story = await draftStory(parsed.data);
     return respData(story);
   } catch (error: any) {
+    // The model wrote something the filter refuses. The draft is free and
+    // nothing has been stored, so there is nothing to roll back — just say why.
+    if (error instanceof ModerationError) {
+      console.warn('storybook draft refused by moderation:', error.category);
+      return respErr(moderationMessage(error.category, request));
+    }
     console.error('story draft failed:', error);
     return respErr(error?.message || 'Failed to write the story');
   }

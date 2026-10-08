@@ -3,7 +3,8 @@
 import { useEffect, useRef } from 'react';
 
 import { getAuthClient, useSession } from '@/core/auth/client';
-import { currentPathWithQuery } from '@/lib/redirect';
+import { USER_HOME } from '@/lib/redirect';
+import { localizeHref } from '@/paraglide/runtime.js';
 import { usePublicConfig } from '@/hooks/use-public-config';
 
 // Mounts the Google One Tap prompt for signed-out visitors when the
@@ -31,8 +32,10 @@ export function GoogleOneTap() {
     const client = getAuthClient(configs);
     (client as any)
       .oneTap?.({
-        // Stay put: One Tap fires on whatever page the visitor is reading.
-        callbackURL: currentPathWithQuery('/'),
+        // One Tap fires on whatever page the visitor is reading, but signing in
+        // should land them in their account — not leave them on the marketing
+        // page the prompt happened to appear over.
+        callbackURL: localizeHref(USER_HOME),
         onPromptNotification: () => {
           // Silently ignore dismissals / FedCM hiccups — the user can still
           // sign in via the normal /sign-in page.

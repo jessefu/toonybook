@@ -1,5 +1,6 @@
-import type { SVGProps } from 'react';
+import type { ComponentType, SVGProps } from 'react';
 
+import { envConfigs } from '@/config';
 import { m } from '@/paraglide/messages.js';
 import {
   SiteFooter,
@@ -42,6 +43,49 @@ function PinterestIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+function XIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden {...props}>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
+
+function YouTubeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden {...props}>
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  );
+}
+
+/**
+ * Footer social icons, driven by `VITE_SOCIAL_*` rather than hardcoded.
+ *
+ * Any platform left unset is simply not rendered. That matters beyond
+ * tidiness: the template shipped links to the bare `instagram.com` front page,
+ * and a dead or meaningless social link is one of the things a payment
+ * provider's reviewer checks.
+ */
+type SocialConfigKey =
+  | 'social_instagram'
+  | 'social_facebook'
+  | 'social_pinterest'
+  | 'social_x'
+  | 'social_youtube';
+
+const SOCIAL_PLATFORMS: {
+  label: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  configKey: SocialConfigKey;
+}[] = [
+  { label: 'Instagram', icon: InstagramIcon, configKey: 'social_instagram' },
+  { label: 'Facebook', icon: FacebookIcon, configKey: 'social_facebook' },
+  { label: 'Pinterest', icon: PinterestIcon, configKey: 'social_pinterest' },
+  { label: 'X', icon: XIcon, configKey: 'social_x' },
+  { label: 'YouTube', icon: YouTubeIcon, configKey: 'social_youtube' },
+];
+
 export function Footer() {
   const columns: FooterColumn[] = [
     {
@@ -54,25 +98,35 @@ export function Footer() {
     },
     {
       title: m['landing.footer.resources'](),
+      // "Help & FAQ" points at the public FAQ page. It used to point straight
+      // at the signed-in ticket list, which bounces anyone who is not logged in
+      // — including a reviewer — to the sign-in page.
       links: [
         { label: m['landing.footer.blog'](), href: '/blog' },
-        { label: m['landing.footer.support'](), href: '/settings/tickets' },
+        { label: m['landing.footer.help'](), href: '/faq' },
       ],
     },
     {
       title: m['landing.footer.legal'](),
+      // Four links, not two: a payment provider reviewing this site requires
+      // Terms, Privacy, a Refund & Cancellation policy and a reachable contact
+      // to be one click from every page, and the footer is on every page.
       links: [
-        { label: m['landing.footer.privacy'](), href: '/privacy-policy' },
         { label: m['landing.footer.terms'](), href: '/terms-of-service' },
+        { label: m['landing.footer.privacy'](), href: '/privacy-policy' },
+        { label: m['landing.footer.refund'](), href: '/refund-policy' },
+        { label: m['landing.footer.contact'](), href: '/contact' },
       ],
     },
   ];
 
-  const socials: FooterSocial[] = [
-    { icon: InstagramIcon, href: 'https://instagram.com', label: 'Instagram' },
-    { icon: FacebookIcon, href: 'https://facebook.com', label: 'Facebook' },
-    { icon: PinterestIcon, href: 'https://pinterest.com', label: 'Pinterest' },
-  ];
+  const socials: FooterSocial[] = SOCIAL_PLATFORMS.map(
+    ({ label, icon, configKey }) => ({
+      label,
+      icon,
+      href: envConfigs[configKey]?.trim() ?? '',
+    })
+  ).filter((social) => social.href.length > 0);
 
   return (
     <SiteFooter

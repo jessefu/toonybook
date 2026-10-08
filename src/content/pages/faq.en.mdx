@@ -1,0 +1,189 @@
+import { envConfigs } from '../../config';
+
+export const meta = {
+  title: 'Help & FAQ',
+  description:
+    'Credits, billing, cancelling, refunds, your photos, and deleting your account.',
+  updated_at: '2026-10-02',
+};
+
+Can't find your answer? Email
+
+<a href={`mailto:${envConfigs.support_email}`}>{envConfigs.support_email}</a> —
+see [Contact Us](/contact).
+
+## Credits
+
+### How do credits work?
+
+One credit buys one illustrated page. The cover illustration is included at no
+extra charge. A book is 4 to 15 pages, so it costs between 4 and 15 credits, and
+the exact number is shown before you confirm.
+
+Writing the story first is free — credits are only spent when you confirm the
+book and the illustrations are drawn.
+
+### What do I get for free?
+
+A new account starts with 10 free credits, which is one complete 10-page book.
+No credit card is needed to try it.
+
+### Do credits expire?
+
+It depends how you got them:
+
+- **Bought in a credit pack** — they never expire. They stay in your account
+  until you use them.
+- **Granted by a subscription** — they expire at the end of the month they were
+  granted for, and do not carry over. Cancel and you keep the credits for the
+  period you have already paid for.
+- **The free signup credits** — these have an expiry date; it is shown in
+  Settings, then Credits.
+
+### Which credits are used first?
+
+Whichever ones expire soonest, so a subscription's credits are spent before the
+permanent ones you bought. You can see the balance and the full history in
+Settings, then Credits.
+
+## Billing and cancelling
+
+### How do I cancel my subscription?
+
+You can do it yourself, in four clicks, without contacting anyone:
+
+1. Sign in.
+2. Go to **Settings**, then **Billing**.
+3. Press **Cancel** next to your subscription.
+4. Confirm.
+
+Cancellation takes effect at the end of the period you have already paid for.
+Until then you keep full access and the credits for that period. There is no
+cancellation fee and no notice period. See the
+[Refund & Cancellation Policy](/refund-policy) for the detail.
+
+### Where are my invoices and receipts?
+
+Settings, then Billing — the payments table lists every charge with its invoice
+link.
+
+### What happens to my credits if I cancel?
+
+The credits from the current period stay usable until that period ends. Credits
+you bought in a pack are yours and never expire, so they are unaffected.
+
+## Refunds
+
+### Can I get a refund?
+
+Unused credits are refundable within 14 days of purchase; credits already spent
+on illustrations are not, because the computing behind them has already been
+consumed. If a book failed because of a problem on our side, the credits for it
+are returned automatically — you do not need to ask.
+
+The full rules, including how to request a refund and how long it takes, are in
+the [Refund & Cancellation Policy](/refund-policy).
+
+## Your photos and your child's privacy
+
+### What happens to the photos I upload?
+
+They are used to draw the illustrations in that book, and nothing else:
+
+1. The photo is stored in our own storage.
+2. When a book is confirmed, we make a private copy for that book and send that
+   copy to the AI provider that draws the illustrations.
+3. When the book finishes, both the copy **and the original upload you sent us**
+   are deleted from our storage.
+4. If a generation fails, the photos are kept so you can retry without uploading
+   them again — they are deleted when you delete the book.
+
+See the [Privacy Policy](/privacy-policy) for the full picture, including what
+our AI providers do with the copy while a book is being drawn.
+
+### Can I use photos of my child?
+
+Yes — that is what the feature is for. You must be the child's parent or legal
+guardian, or have their permission, and the same goes for any other person in a
+photo you upload. Do not upload photos of other people's children.
+
+### Do the illustrations really look like the child?
+
+They are drawn to match the photos, and results vary with the photo: a clear,
+well-lit picture of one person works much better than a group shot or a blurry
+one. Illustrations cannot be redrawn after a book is generated, so check the
+photos before you confirm.
+
+## Your account
+
+### How do I delete my account?
+
+Go to **Settings**, then **Profile**, and press **Delete my account**. You will
+be asked to type the email address on the account to confirm.
+
+If you have an active subscription, cancel it first — deleting an account does
+not stop a subscription from renewing, so we ask you to cancel from Billing
+instead.
+
+Deleting your account removes your storybooks, illustrations, uploaded photos,
+remaining credits and your sign-in. The only thing we keep is your billing
+records, which tax and accounting rules require us to retain. This cannot be
+undone.
+
+### Can I download my books first?
+
+Yes, and you should if you want to keep them. Every finished book has a
+**Download PDF** button in your library, and once your account is deleted the
+books are gone.
+
+## Keeping stories safe
+
+### How do you keep the stories safe for children?
+
+Every idea is checked before a story is written. Violence, sexual content,
+self-harm, hateful language, drugs, alcohol and gambling are refused, in English
+and in Chinese — and the same check runs on the names you type, because those get
+printed in the book.
+
+The check runs again on the story itself: on what the model writes, and on any
+page you rewrite yourself in the review step. Nothing is illustrated until the
+whole story has passed. **If a story is refused, you are not charged for it** —
+a draft that fails costs nothing, and a book that fails has its credits returned
+automatically.
+
+Behind the check, the prompts that write the stories carry their own child-safety
+instructions: the book is read aloud to a child aged 2 to 10, often at bedtime, so
+a model asked for something frightening is told to keep the feeling and leave the
+harm out.
+
+None of that is a guarantee, and we would rather hear about it than not. If a book
+does not feel right for a child, tell us its name and we will look at it.
+
+## Troubleshooting
+
+### A book has been stuck on "Creating…" for a while
+
+Illustrations are drawn in parallel, and a provider occasionally stalls. A book
+that has not finished within 15 minutes is treated as failed, and the credits
+are returned to your account automatically. You can start it again from your
+idea, and you still have the story — the draft is free to regenerate.
+
+### The story used a built-in template instead of a text model
+
+That message means no text model is available, so the story came from our
+fallback template. It is worth telling us: the fix is on the admin side, under
+Settings then AI.
+
+### A page's illustration looks wrong
+
+Generative models make mistakes, and the occasional odd hand or strange animal
+is one of them. Tell us which book and which page — we will look at whether it
+can be regenerated. (Regenerating costs credits like any generation, unless the
+problem is on our side.)
+
+## Still stuck?
+
+Email <a href={`mailto:${envConfigs.support_email}`}>{envConfigs.support_email}</a>
+and we will reply within two business days. If you are signed in, you can also
+open a ticket from Settings, then Support Tickets — that keeps the history in
+one place.

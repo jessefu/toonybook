@@ -325,6 +325,53 @@ export async function deleteStoredObjects(keys: string[]): Promise<void> {
 }
 
 /**
+ * Delete objects living in the shared `uploads/` namespace — the one the image
+ * upload route writes to, keyed by the md5 of the bytes.
+ *
+ * Two differences from `deleteStoredObjects`, both of which silently delete the
+ * wrong thing if ignored:
+ *
+ * - The storage provider prepends its own upload path (`uploads/` by default),
+ *   so the key has to be relative to it: `uploads/abc.jpg` is object
+ *   `uploads/abc.jpg`, which is `deleteFile({ key: 'abc.jpg' })`. Callers pass
+ *   the key in either shape — the upload route returns it with the prefix, a
+ *   stored plan may hold it without — so it is stripped here, in one place.
+ * - With no storage configured the dev fallback writes these to
+ *   `public/uploads/`, not `public/generated/`.
+ *
+ * Best-effort, like `deleteStoredObjects`: a failed delete means an object
+ * lingers, and must not fail the operation that was cleaning up.
+ *
+ * Note on de-duplication: uploads are content-addressed, so the same bytes
+ * uploaded twice share one object. Deleting it is therefore only safe once
+ * nothing else needs it — see the callers, which run this when a book settles
+ * and its own copies already exist.
+ */
+export async function deleteUploadedObjects(keys: string[]): Promise<void> {
+  const targets = keys
+    .map((key) => key.replace(/\\/g, '/').replace(/^\/+/, ''))
+    .map((key) => key.replace(/^uploads\//, ''))
+    .filter(Boolean);
+  if (!targets.length) return;
+
+  const storage = await getStorage();
+  for (const raw of targets) {
+    try {
+      const key = safeRelativeKey(raw);
+      if (storage) {
+        await storage.deleteFile({ key });
+      } else {
+        await rm(path.join(process.cwd(), 'public', 'uploads', key), {
+          force: true,
+        });
+      }
+    } catch (error) {
+      console.error('delete uploaded object failed:', raw, error);
+    }
+  }
+}
+
+/**
  * Build the `saveFiles` hook that core/ai providers call once a generation
  * finishes (Replicate/Fal only run it when `customStorage: true`).
  *

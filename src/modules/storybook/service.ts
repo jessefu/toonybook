@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import { aiTask } from '@/config/db/schema';
@@ -25,15 +25,20 @@ import {
   type ImageProviderKind,
 } from '@/modules/ai/service';
 import { getAllConfigs } from '@/modules/config/service';
+import { moderateAll, ModerationError } from '@/modules/moderation/service';
 import {
   copyStoredObject,
   deleteStoredObjects,
+  deleteUploadedObjects,
   persistFileBytes,
 } from '@/modules/storage/service';
 
 import { ART_STYLE_CONTRACT, ART_STYLE_PRESETS } from './art-style-prompts';
 import { buildStorybookPdf } from './pdf';
-import { STORYBOOK_STYLE_PRESETS } from './style-prompts';
+import {
+  STORY_SAFETY_CONTRACT,
+  STORYBOOK_STYLE_PRESETS,
+} from './style-prompts';
 import {
   clampStorybookPages,
   DEFAULT_STORYBOOK_STYLE,
@@ -181,6 +186,17 @@ interface StorybookPlan {
   /** Character photos, kept so they can be deleted once the book settles.
    * Optional: plans written before character support have none. */
   references?: StorybookReference[];
+  /**
+   * The shared `uploads/` keys the character photos came from — the originals,
+   * as uploaded, before this book got its own copies.
+   *
+   * Kept so a finished book can release them: uploads are content-addressed and
+   * de-duplicated, so they were never deleted on the way in. Deleted once the
+   * book settles (see `settleStorybook`) and if the book is deleted while it is
+   * still generating — not on a failed start, where the user's next retry sends
+   * the same keys again.
+   */
+  uploadKeys?: string[];
   slots: ImageSlot[];
   startedAt: number;
   /** Epoch ms before which another poll should be skipped. */
@@ -311,6 +327,10 @@ async function writeStoryWithAI(params: {
   // stated to win.
   const system = [
     STORYBOOK_STYLE_PRESETS[style],
+    // Safety comes immediately after the style, before the format rules: a
+    // style says how the book reads, this says who it is for, and neither is
+    // negotiable by the other.
+    STORY_SAFETY_CONTRACT,
     `Write in ${langName}.`,
     wordless
       ? 'This is a wordless book: every page\'s "text" must be the empty string, and all of the storytelling moves into "scene".'
@@ -475,6 +495,31 @@ async function resolveStory(params: {
 }
 
 /**
+ * Refuse a story whose own words trip content moderation.
+ *
+ * Runs on text we did not write as well as text we did: the story a user
+ * confirms has been through the review step, where every page's text and scene
+ * can be edited by hand, and a model can also produce something its prompt did
+ * not intend. Both end up printed in a child's book.
+ */
+function assertStoryAllowed(story: {
+  title: string;
+  pages: { text: string; scene: string }[];
+}): void {
+  // A wordless book has empty `text` on every page, so most of what there is to
+  // read here is the scenes — which are also what the image model is told to
+  // draw.
+  const verdict = moderateAll([
+    story.title,
+    ...story.pages.flatMap((page) => [page.text, page.scene]),
+  ]);
+  if (!verdict.allowed) {
+    console.warn('storybook text refused by moderation:', verdict.matches);
+    throw new ModerationError(verdict.category);
+  }
+}
+
+/**
  * Phase 1 of the two-step flow: write the text, and only the text.
  *
  * Deliberately free — no task row, no credits, no image provider call. The user
@@ -490,7 +535,7 @@ export async function draftStory(params: {
   style?: StorybookStyle;
   pageCount?: number;
 }): Promise<StoryDraft> {
-  return resolveStory({
+  const story = await resolveStory({
     idea: params.idea,
     childName: params.childName,
     characterNames: params.characterNames ?? [],
@@ -499,6 +544,11 @@ export async function draftStory(params: {
     style: params.style ?? DEFAULT_STORYBOOK_STYLE,
     pageCount: clampStorybookPages(params.pageCount),
   });
+  // The idea was checked before we got here; this catches the story the model
+  // wrote from it, so the user hears about it at the free step rather than
+  // after paying for illustrations.
+  assertStoryAllowed(story);
+  return story;
 }
 
 /** Clamp a client-supplied story to something we can actually illustrate. */
@@ -680,6 +730,12 @@ export async function startStorybook(params: {
           pageCount,
         });
 
+    // 3b. The last gate before the expensive half. `story` is either the text
+    //     the user confirmed — which the review step lets them rewrite word by
+    //     word — or the one just written here, and both get printed. Throwing
+    //     settles the task as failed, which returns the credits.
+    assertStoryAllowed(story);
+
     // 4. Fire off every illustration at once. Replicate/Fal/Kie only accept the
     //    job here; the actual waiting happens in advanceStorybook().
     const referenceImages = references.map((r) => r.url);
@@ -744,6 +800,7 @@ export async function startStorybook(params: {
       storyStyle: story.storyStyle ?? style,
       artStyle: params.artStyle,
       references,
+      uploadKeys: characters.map((c) => c.key),
       slots,
       startedAt: Date.now(),
       nextPollAt: 0,
@@ -935,6 +992,12 @@ async function finalizeStorybook(
   result.pdfKey = plan.pdfKey;
 
   await deleteStoredObjects((plan.references ?? []).map((r) => r.key));
+  // The book is finished, so the originals it was drawn from have done their
+  // job: the illustrations are the artwork now, and the photos were only ever
+  // lent to us to make them. Deliberately only on success — a failed book is
+  // retried with the same upload keys, so `failStorybook` keeps them and they
+  // go when the book is deleted.
+  await deleteUploadedObjects(plan.uploadKeys ?? []);
   // Plan before result: if the second write is lost, the next poll reuses the
   // PDF already in storage instead of rebuilding it.
   await updateTaskInfo(taskId, plan as unknown as Record<string, any>);
@@ -1083,6 +1146,33 @@ export async function getStorybook(taskId: string, userId: string) {
 }
 
 /**
+ * Release every stored object a book owns: its illustrations, cover, PDF, the
+ * copies of the character photos it was drawn from, and — since uploads are
+ * content-addressed and never deleted on the way in — those originals too.
+ *
+ * Shared by the library delete (which keeps the row) and account deletion
+ * (which does not), so a book's storage is released the same way either way.
+ */
+async function releaseStorybookObjects(task: typeof aiTask.$inferSelect) {
+  const result = parseJson<StorybookResult>(task.taskResult);
+  const plan = parseJson<StorybookPlan>(task.taskInfo);
+  await deleteStoredObjects(
+    [
+      result?.pdfKey,
+      result?.coverKey,
+      // A book released mid-generation has no result yet; its plan still knows
+      // about the cover and any reference photos.
+      ...(plan?.slots ?? []).map((s) => s.key),
+      plan?.pdfKey,
+      ...(plan?.references ?? []).map((r) => r.key),
+    ].filter((key): key is string => Boolean(key))
+  );
+  // A book released before it settled never got to release the uploads it was
+  // drawn from — this is the path a failed book's photos leave by.
+  await deleteUploadedObjects(plan?.uploadKeys ?? []);
+}
+
+/**
  * Remove a book: hidden from the user's library (the row is kept, so the credit
  * ledger stays intact) and its stored objects released.
  *
@@ -1104,20 +1194,41 @@ export async function deleteStorybook(taskId: string, userId: string) {
     .set({ deletedAt: new Date() })
     .where(eq(aiTask.id, taskId));
 
-  const result = parseJson<StorybookResult>(task.taskResult);
-  const plan = parseJson<StorybookPlan>(task.taskInfo);
-  await deleteStoredObjects(
-    [
-      result?.pdfKey,
-      result?.coverKey,
-      // A book deleted mid-generation has no result yet; its plan still knows
-      // about the cover and any reference photos.
-      ...(plan?.slots ?? []).map((s) => s.key),
-      plan?.pdfKey,
-      ...(plan?.references ?? []).map((r) => r.key),
-    ].filter((key): key is string => Boolean(key))
-  );
+  await releaseStorybookObjects(task);
   return true;
+}
+
+/**
+ * Delete everything a user owns, storage included, and report how many books
+ * went.
+ *
+ * Hard delete rather than the library's soft delete: this runs when the account
+ * itself is being deleted, where a row that says "this belonged to a user who
+ * no longer exists" is exactly what must not be left behind.
+ */
+export async function deleteUserStorybooks(userId: string): Promise<number> {
+  const tasks = await db()
+    .select()
+    .from(aiTask)
+    .where(
+      and(eq(aiTask.userId, userId), eq(aiTask.mediaType, STORYBOOK_MEDIA_TYPE))
+    );
+
+  for (const task of tasks) {
+    await releaseStorybookObjects(task);
+  }
+
+  if (tasks.length) {
+    await db()
+      .delete(aiTask)
+      .where(
+        and(
+          eq(aiTask.userId, userId),
+          eq(aiTask.mediaType, STORYBOOK_MEDIA_TYPE)
+        )
+      );
+  }
+  return tasks.length;
 }
 
 /**

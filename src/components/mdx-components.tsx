@@ -1,7 +1,11 @@
 import type { AnchorHTMLAttributes, HTMLAttributes } from 'react';
 import type { MDXComponents } from 'mdx/types';
 
+import { Link } from '@/core/i18n/navigation';
 import { cn } from '@/lib/utils';
+
+const linkClassName = (className?: string) =>
+  cn('text-primary font-medium underline-offset-4 hover:underline', className);
 
 export const mdxComponents: MDXComponents = {
   h1: ({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) => (
@@ -37,15 +41,21 @@ export const mdxComponents: MDXComponents = {
       {...props}
     />
   ),
-  a: ({ className, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => (
-    <a
-      className={cn(
-        'text-primary font-medium underline-offset-4 hover:underline',
-        className
-      )}
-      {...props}
-    />
-  ),
+  // One MDX file serves every locale, so `[Refunds](/refund-policy)` written in
+  // the source has to be localized at render time — otherwise a reader of
+  // /zh/privacy-policy who follows that link lands on the English page. A plain
+  // anchor for external and `mailto:` hrefs, the locale-aware Link for our own
+  // paths. (`//host` is protocol-relative, so it is not one of ours.)
+  a: ({
+    className,
+    href,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement>) =>
+    href?.startsWith('/') && !href.startsWith('//') ? (
+      <Link href={href} className={linkClassName(className)} {...props} />
+    ) : (
+      <a href={href} className={linkClassName(className)} {...props} />
+    ),
   ul: ({ className, ...props }: HTMLAttributes<HTMLUListElement>) => (
     <ul
       className={cn(

@@ -4,6 +4,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { apiGet } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
 
+import { DeleteAccountCard } from './-delete-account';
 import { SettingsForm } from './-settings-form';
 
 function SettingsPage() {
@@ -32,7 +33,12 @@ function SettingsPage() {
   }
 
   return (
-    <SettingsForm name={user.name} email={user.email} image={user.image} />
+    <>
+      <SettingsForm name={user.name} email={user.email} image={user.image} />
+      {/* Outside the profile form on purpose: a destructive action should not
+          live inside the form whose submit button is right above it. */}
+      <DeleteAccountCard email={user.email} />
+    </>
   );
 }
 

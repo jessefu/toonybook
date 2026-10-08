@@ -163,7 +163,17 @@ export async function consume(params: {
             or(isNull(credit.expiresAt), gt(credit.expiresAt, now))
           )
         )
-        .orderBy(asc(credit.expiresAt))
+        // Expiring credits first, permanent ones last. The CASE is not
+        // decoration: SQLite/D1 and MySQL sort NULL *first* ascending, so
+        // without it a never-expiring pack is drained before the subscription
+        // credits that are about to lapse — the opposite of what the packs
+        // promise. Postgres already sorts NULL last, so this is a no-op there.
+        // A CASE works on all three dialects; `NULLS LAST` does not
+        // (MySQL has no such syntax).
+        .orderBy(
+          sql`case when ${credit.expiresAt} is null then 1 else 0 end`,
+          asc(credit.expiresAt)
+        )
         .limit(batchSize)
         .for('update');
 

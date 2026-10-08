@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 
 import { getAuth } from '@/core/auth';
+import { moderateAll, ModerationError } from '@/modules/moderation/service';
 import {
   listStorybooks,
   startStorybook,
@@ -18,6 +19,8 @@ import {
 } from '@/modules/storybook/styles';
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
+
+import { moderationMessage } from './-moderation';
 
 /** The story the user confirmed in `POST /api/storybooks/draft`. */
 const storySchema = z.object({
@@ -105,6 +108,26 @@ async function POST({ request }: { request: Request }) {
       return respErr(parsed.error.issues[0]?.message || 'Invalid input');
     }
 
+    // Content moderation. The idea and the names come from the form; the story
+    // is the one the user just read and could have edited by hand in the review
+    // step, so every word of it is checked before any credits are spent on
+    // illustrations. `startStorybook` checks again after writing a story of its
+    // own, which is the other way text can enter a book.
+    const verdict = moderateAll([
+      parsed.data.idea,
+      parsed.data.childName,
+      ...(parsed.data.characters ?? []).map((character) => character.name),
+      parsed.data.story?.title,
+      ...(parsed.data.story?.pages ?? []).flatMap((page) => [
+        page.text,
+        page.scene,
+      ]),
+    ]);
+    if (!verdict.allowed) {
+      console.warn('storybook rejected by moderation:', verdict.matches);
+      return respErr(moderationMessage(verdict.category, request));
+    }
+
     // Returns as soon as the illustrations are queued — the book is finished
     // by the client's polling (see advanceStorybook).
     const task = await startStorybook({
@@ -113,6 +136,12 @@ async function POST({ request }: { request: Request }) {
     });
     return respData(task);
   } catch (error: any) {
+    // Thrown when the story the model wrote — rather than the one the user
+    // typed — is what the filter refuses.
+    if (error instanceof ModerationError) {
+      console.warn('storybook refused by moderation:', error.category);
+      return respErr(moderationMessage(error.category, request));
+    }
     const message = error?.message || 'Failed to create storybook';
     if (message.toLowerCase().includes('insufficient')) {
       return respErr('Insufficient credits');

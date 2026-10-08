@@ -19,6 +19,16 @@ const AUTH_PATH_RE =
   /^\/(sign-in|sign-up|verify-email|forgot-password|reset-password|auth-callback)(\/|\?|#|$)/;
 
 /**
+ * Where a signed-in user belongs when nothing more specific is known: their own
+ * dashboard.
+ *
+ * The single source of truth for "the user's page". Every post-auth path that
+ * has no better answer points here — including the marketing root, which is a
+ * page for visitors, not for members.
+ */
+export const USER_HOME = '/settings';
+
+/**
  * Normalize a redirect target to a same-origin path (`/foo?a=1#b`), or null if
  * it points elsewhere / at an auth page. Absolute URLs on this origin are
  * accepted and reduced to their path.
@@ -82,25 +92,51 @@ export function isAllowedAppProtocolUrl(
 }
 
 /**
+ * Paths a sign-in is allowed to return to.
+ *
+ * Everything else — the landing page, the blog, the FAQ, the legal pages — is
+ * a page for visitors, and someone who signs in from one of those belongs in
+ * their account rather than back where they were reading. That is the whole
+ * point of the list: without it, signing in from the landing page (through the
+ * support widget's prompt, say) quietly leaves you on the landing page.
+ *
+ * `/pricing` is on the list on purpose. Someone signing in from there is
+ * mid-purchase, and sending them to the dashboard would cost them the plan they
+ * had just picked.
+ */
+const SIGN_IN_RETURN_RE = /^\/(settings|admin|pricing)(\/|\?|#|$)/;
+
+/**
+ * Whether a path is one a sign-in may return to.
+ *
+ * Exported because the verify-email flow decides the same thing, on its own
+ * copy of the destination.
+ */
+export function isSignInReturnPath(path: string): boolean {
+  return SIGN_IN_RETURN_RE.test(deLocalizeHref(path.split(/[?#]/)[0] || '/'));
+}
+
+/**
  * Where to send the user once they are signed in.
  *
  * `redirect` accepts either kind of target; `callbackUrl` is always an
- * internal path. An app protocol URL detours through `/auth-callback`.
+ * internal path. An app protocol URL detours through `/auth-callback`, and
+ * anything that is not an app page (see `SIGN_IN_RETURN_RE`) resolves to
+ * `USER_HOME`.
  */
 export function resolveAfterAuthUrl(params: {
   redirect?: string | null;
   callbackUrl?: string | null;
   fallback?: string;
 }): string {
-  const { redirect, callbackUrl, fallback = '/settings' } = params;
+  const { redirect, callbackUrl, fallback = USER_HOME } = params;
   if (isAppProtocolUrl(redirect)) {
     // Scheme allow-listing happens on /auth-callback, which is the only place
     // that can hand out a token.
     return `/auth-callback?redirect=${encodeURIComponent(redirect as string)}`;
   }
-  return (
-    safeInternalPath(callbackUrl) || safeInternalPath(redirect) || fallback
-  );
+  const target = safeInternalPath(callbackUrl) || safeInternalPath(redirect);
+  return target && isSignInReturnPath(target) ? target : fallback;
 }
 
 /**

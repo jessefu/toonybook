@@ -8,8 +8,13 @@ const STATIC_PATHS = [
   '',
   '/pricing',
   '/blog',
+  '/faq',
   '/privacy-policy',
   '/terms-of-service',
+  // The other two pages a payment provider looks for. Listed here as well as in
+  // the footer so they are crawlable straight from the sitemap.
+  '/refund-policy',
+  '/contact',
 ];
 
 type Entry = {

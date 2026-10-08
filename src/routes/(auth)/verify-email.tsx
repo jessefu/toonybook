@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { authClient, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
+import { isSignInReturnPath, USER_HOME } from '@/lib/redirect';
 import { m } from '@/paraglide/messages.js';
 import { deLocalizeHref, localizeHref } from '@/paraglide/runtime.js';
 import { Button } from '@/components/ui/button';
@@ -21,18 +22,18 @@ import {
 const RESEND_COOLDOWN_SECONDS = 60;
 
 function safeDecodeCallbackUrl(raw?: string | null) {
-  if (!raw) return '/';
+  if (!raw) return USER_HOME;
   try {
     const decoded = decodeURIComponent(raw);
-    if (decoded.startsWith('/')) return decoded;
-    return '/';
+    if (decoded.startsWith('/') && isSignInReturnPath(decoded)) return decoded;
+    return USER_HOME;
   } catch {
-    return '/';
+    return USER_HOME;
   }
 }
 
 function stripLocalePrefix(path: string) {
-  if (!path?.startsWith('/')) return '/';
+  if (!path?.startsWith('/')) return USER_HOME;
   return deLocalizeHref(path);
 }
 
@@ -107,7 +108,7 @@ function VerifyEmailPage() {
 
   const signInPath = useMemo(() => {
     const query = new URLSearchParams();
-    query.set('callbackUrl', nextUrl || '/');
+    query.set('callbackUrl', nextUrl || USER_HOME);
     return `/sign-in?${query.toString()}`;
   }, [nextUrl]);
 
@@ -194,7 +195,7 @@ function VerifyEmailPage() {
       setLoading(true);
       const result = await authClient.sendVerificationEmail({
         email,
-        callbackURL: localizeHref(nextUrl || '/'),
+        callbackURL: localizeHref(nextUrl || USER_HOME),
       });
       if (result?.error) {
         toast.error(

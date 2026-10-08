@@ -59,10 +59,12 @@ export function Pricing({ title }: { title?: string } = {}) {
     { icon: CreditCard, label: m['landing.pricing.feature_no_card']() },
     { icon: Download, label: m['landing.pricing.feature_pdf_export']() },
   ];
-  const monthlyFeatures = [
+  // One credit is one illustrated page, so every plan line below counts pages
+  // and the per-page rate falls as you move right (see src/config/pricing.ts).
+  const storytellerMonthlyFeatures = [
     {
       icon: CalendarDays,
-      label: m['landing.pricing.feature_100_credits_month'](),
+      label: m['landing.pricing.feature_40_credits_month'](),
     },
     {
       icon: InfinityIcon,
@@ -72,6 +74,53 @@ export function Pricing({ title }: { title?: string } = {}) {
     {
       icon: Headphones,
       label: m['landing.pricing.feature_priority_support'](),
+    },
+  ];
+  const storytellerYearlyFeatures = [
+    {
+      icon: CalendarDays,
+      label: m['landing.pricing.feature_480_credits_year'](),
+    },
+    { icon: Check, label: m['landing.pricing.feature_two_months_free']() },
+    {
+      icon: InfinityIcon,
+      label: m['landing.pricing.feature_unlimited_books'](),
+    },
+    { icon: Download, label: m['landing.pricing.feature_pdf_export']() },
+    {
+      icon: Headphones,
+      label: m['landing.pricing.feature_priority_support'](),
+    },
+  ];
+  const classroomMonthlyFeatures = [
+    {
+      icon: CalendarDays,
+      label: m['landing.pricing.feature_150_credits_month'](),
+    },
+    {
+      icon: InfinityIcon,
+      label: m['landing.pricing.feature_unlimited_books'](),
+    },
+    { icon: Download, label: m['landing.pricing.feature_pdf_export']() },
+    {
+      icon: Headphones,
+      label: m['landing.pricing.feature_dedicated_support'](),
+    },
+  ];
+  const classroomYearlyFeatures = [
+    {
+      icon: CalendarDays,
+      label: m['landing.pricing.feature_1800_credits_year'](),
+    },
+    { icon: Check, label: m['landing.pricing.feature_two_months_free']() },
+    {
+      icon: InfinityIcon,
+      label: m['landing.pricing.feature_unlimited_books'](),
+    },
+    { icon: Download, label: m['landing.pricing.feature_pdf_export']() },
+    {
+      icon: Headphones,
+      label: m['landing.pricing.feature_dedicated_support'](),
     },
   ];
   // Both packs promise the same two things and differ only in how many pages
@@ -84,7 +133,7 @@ export function Pricing({ title }: { title?: string } = {}) {
 
   const groups: PricingGroup[] = [
     {
-      key: 'plans',
+      key: 'monthly',
       label: m['landing.pricing.tab_plans'](),
       plans: [
         {
@@ -102,18 +151,72 @@ export function Pricing({ title }: { title?: string } = {}) {
           id: 'storyteller-monthly',
           name: m['landing.pricing.pro'](),
           description: m['landing.pricing.pro_desc'](),
-          price: '$29.99',
+          price: '$9.99',
           interval: 'mo',
           featured: true,
           badge: m['landing.pricing.popular'](),
-          features: monthlyFeatures,
+          features: storytellerMonthlyFeatures,
           productId: 'storyteller_monthly',
-          priceInCents: 2999,
+          priceInCents: 999,
           currency: 'usd',
-          credits: 100,
+          credits: 40,
           // Subscription credits lapse with the month they were granted for.
           creditsValidDays: 30,
           plan: { name: 'Storyteller', interval: 'month', intervalCount: 1 },
+        },
+        {
+          id: 'classroom-monthly',
+          name: m['landing.pricing.enterprise'](),
+          description: m['landing.pricing.enterprise_desc'](),
+          price: '$29.99',
+          interval: 'mo',
+          features: classroomMonthlyFeatures,
+          productId: 'classroom_monthly',
+          priceInCents: 2999,
+          currency: 'usd',
+          credits: 150,
+          creditsValidDays: 30,
+          plan: { name: 'Classroom', interval: 'month', intervalCount: 1 },
+        },
+      ],
+    },
+    {
+      key: 'yearly',
+      label: m['landing.pricing.tab_yearly'](),
+      plans: [
+        {
+          id: 'storyteller-yearly',
+          name: m['landing.pricing.pro'](),
+          description: m['landing.pricing.pro_desc'](),
+          price: '$99',
+          originalPrice: '$119.88',
+          interval: 'yr',
+          featured: true,
+          badge: m['landing.pricing.best_value'](),
+          features: storytellerYearlyFeatures,
+          productId: 'storyteller_yearly',
+          priceInCents: 9900,
+          currency: 'usd',
+          // A year's allowance arrives in one grant — there is no monthly
+          // re-grant for annual plans — so it lapses with the year it bought.
+          credits: 480,
+          creditsValidDays: 365,
+          plan: { name: 'Storyteller', interval: 'year', intervalCount: 1 },
+        },
+        {
+          id: 'classroom-yearly',
+          name: m['landing.pricing.enterprise'](),
+          description: m['landing.pricing.enterprise_desc'](),
+          price: '$299',
+          originalPrice: '$359.88',
+          interval: 'yr',
+          features: classroomYearlyFeatures,
+          productId: 'classroom_yearly',
+          priceInCents: 29900,
+          currency: 'usd',
+          credits: 1800,
+          creditsValidDays: 365,
+          plan: { name: 'Classroom', interval: 'year', intervalCount: 1 },
         },
       ],
     },
@@ -134,18 +237,18 @@ export function Pricing({ title }: { title?: string } = {}) {
           credits: 15,
         },
         {
-          id: 'credits-100',
+          id: 'credits-50',
           name: m['landing.pricing.pack_large'](),
           description: m['landing.pricing.pack_large_desc'](),
-          price: '$29.99',
+          price: '$14.99',
           featured: true,
           badge: m['landing.pricing.best_value'](),
-          features: packFeatures(m['landing.pricing.feature_100_credits']()),
+          features: packFeatures(m['landing.pricing.feature_50_credits']()),
           buttonText: m['landing.pricing.buy_pack'](),
-          productId: 'credits_100',
-          priceInCents: 2999,
+          productId: 'credits_50',
+          priceInCents: 1499,
           currency: 'usd',
-          credits: 100,
+          credits: 50,
         },
       ],
     },

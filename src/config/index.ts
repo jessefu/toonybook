@@ -16,9 +16,22 @@ const publicEnv = (key: string) => metaEnv[key] ?? procEnv[key];
 export const envConfigs: Record<string, string> = {
   // App (public)
   app_url: publicEnv('VITE_APP_URL') ?? 'http://localhost:3000',
-  app_name: publicEnv('VITE_APP_NAME') ?? 'ShipAny',
+  app_name: publicEnv('VITE_APP_NAME') ?? 'ToonyBook',
   app_description: publicEnv('VITE_APP_DESCRIPTION') ?? 'Ship your SaaS faster',
   app_logo: publicEnv('VITE_APP_LOGO') ?? '/logo.svg',
+  // Where users are told to write. Public rather than a secret: the legal
+  // pages, the Contact page and the footer all render it, and a payment
+  // provider reviewing the site checks that the address is reachable.
+  support_email: publicEnv('VITE_SUPPORT_EMAIL') ?? 'support@example.com',
+
+  // Social links, empty by default. The footer renders only the ones that are
+  // set, so an unused platform simply does not appear rather than pointing at
+  // instagram.com's front page — which is what a reviewer notices.
+  social_instagram: publicEnv('VITE_SOCIAL_INSTAGRAM') ?? '',
+  social_facebook: publicEnv('VITE_SOCIAL_FACEBOOK') ?? '',
+  social_pinterest: publicEnv('VITE_SOCIAL_PINTEREST') ?? '',
+  social_x: publicEnv('VITE_SOCIAL_X') ?? '',
+  social_youtube: publicEnv('VITE_SOCIAL_YOUTUBE') ?? '',
 
   // Database
   database_url: procEnv.DATABASE_URL ?? '',

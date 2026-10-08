@@ -6,7 +6,11 @@ import { z } from 'zod';
 import { authClient, signIn, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
-import { resolveAfterAuthUrl, safeInternalPath } from '@/lib/redirect';
+import {
+  resolveAfterAuthUrl,
+  safeInternalPath,
+  USER_HOME,
+} from '@/lib/redirect';
 import { m } from '@/paraglide/messages.js';
 import { localizeHref } from '@/paraglide/runtime.js';
 import { usePublicConfig } from '@/hooks/use-public-config';
@@ -47,22 +51,25 @@ function SignInPage() {
   }, []);
 
   // Already signed in (visited /sign-in directly, or a stale callbackUrl looped
-  // back here) → go home. The auth pages never gate themselves, so this can't loop.
+  // back here) → their account, not the marketing page. The auth pages never
+  // gate themselves, so this can't loop.
   useEffect(() => {
     if (sessionPending || navigatingRef.current) return;
     if (session?.user) {
       navigatingRef.current = true;
-      router.push('/');
+      router.push(USER_HOME);
     }
   }, [sessionPending, session?.user, router]);
 
   // Allow only same-site relative paths, and never an auth page (would loop).
   const safeCallbackUrl = safeInternalPath(callbackUrl);
 
+  // Destination after a successful sign-in. The rule lives in
+  // resolveAfterAuthUrl: the app and the pricing page are honoured, everything
+  // else lands on the user's own page.
   const afterLoginUrl = resolveAfterAuthUrl({
     redirect: redirectParam,
     callbackUrl,
-    fallback: '/settings',
   });
 
   // Carry callbackUrl/redirect across to sign-up so the destination survives the switch.

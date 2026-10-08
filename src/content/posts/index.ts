@@ -7,14 +7,19 @@ import { baseLocale } from '@/paraglide/runtime.js';
  * File naming: `<slug>.<locale>.mdx` (falls back to the base locale).
  * Register every local post slug here — it drives loading and the sitemap.
  *
+ * Empty on purpose: the two articles that shipped here (`what-is-shipany`,
+ * `blocks-vs-components`) were template demo content about the template
+ * itself, and every consumer degrades cleanly without them — the landing
+ * section hides itself when there is nothing to show, /blog shows its empty
+ * state, and the sitemap and llms.txt simply list no articles. Drop a
+ * `<slug>.en.mdx` / `<slug>.zh.mdx` pair in this directory and add the slug
+ * back here and it is picked up everywhere again.
+ *
  * This module is isomorphic (safe in client bundles). Database posts are
  * fetched through the server functions in ./server.ts and merged with the
  * local posts via the pure helpers below.
  */
-export const BLOG_POST_SLUGS = [
-  'what-is-shipany',
-  'blocks-vs-components',
-] as const;
+export const BLOG_POST_SLUGS: readonly string[] = [];
 
 export type BlogPostMeta = {
   title: string;
@@ -54,7 +59,7 @@ const postModules = import.meta.glob<PostModule>('/src/content/posts/*.mdx', {
 });
 
 export function loadLocalPost(slug: string, locale: string): PostModule | null {
-  if (!BLOG_POST_SLUGS.includes(slug as (typeof BLOG_POST_SLUGS)[number])) {
+  if (!BLOG_POST_SLUGS.includes(slug)) {
     return null;
   }
   return (
@@ -79,7 +84,7 @@ function localPostToItem(slug: string, meta: BlogPostMeta): BlogPost {
 
 export function getLocalPosts(locale: string): BlogPost[] {
   return BLOG_POST_SLUGS.map((slug) => ({
-    slug: slug as string,
+    slug,
     mod: loadLocalPost(slug, locale),
   }))
     .filter((m): m is { slug: string; mod: PostModule } => m.mod !== null)

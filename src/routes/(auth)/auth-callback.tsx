@@ -8,6 +8,7 @@ import {
   isAllowedAppProtocolUrl,
   isAppProtocolUrl,
   safeInternalPath,
+  USER_HOME,
 } from '@/lib/redirect';
 import { m } from '@/paraglide/messages.js';
 import { localizeHref } from '@/paraglide/runtime.js';
@@ -42,7 +43,7 @@ function AuthCallbackPage() {
     // Web target, or nothing usable: no token involved, just go.
     if (!isAppProtocolUrl(target)) {
       handledRef.current = true;
-      window.location.replace(localizeHref(internalPath || '/'));
+      window.location.replace(localizeHref(internalPath || USER_HOME));
       return;
     }
 
@@ -52,7 +53,7 @@ function AuthCallbackPage() {
     );
     if (!allowed) {
       handledRef.current = true;
-      window.location.replace(localizeHref('/'));
+      window.location.replace(localizeHref(USER_HOME));
       return;
     }
 

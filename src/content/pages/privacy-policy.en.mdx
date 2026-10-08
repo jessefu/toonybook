@@ -1,53 +1,272 @@
+import { envConfigs } from '../../config';
+
 export const meta = {
   title: 'Privacy Policy',
-  description: 'How we collect, use, and protect your personal information.',
-  updated_at: '2026-05-21',
+  description:
+    'What we collect, how we use it, who we share it with, and how we protect children’s privacy.',
+  updated_at: '2026-10-02',
 };
 
-## Introduction
+## 1. Who we are, and what this covers
 
-We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you use our service.
+{envConfigs.app_name} is built and operated by the {envConfigs.app_name} team
+("we", "us", "our"). This Privacy Policy explains what personal information we
+collect when you use {envConfigs.app_name} (the "Service"), why we collect it,
+who we share it with, and the choices and rights you have. It covers our website
+and everything we provide through it.
 
-## Information We Collect
+It does not cover the third-party services we use to run the Service — payments
+and AI generation, for example. Those are described in section 7, and each has
+its own privacy policy.
 
-We collect the following types of information to provide and improve our service:
+## 2. The short version
 
-1. **Account Information** — Your name, email address, and other details you provide when creating an account.
-2. **Usage Data** — Information about how you interact with the service, including features accessed, frequency of use, and interaction patterns.
-3. **Device Information** — Device type, operating system, and browser type, used to optimize compatibility and performance.
-4. **Cookies** — Small data files stored on your device to remember preferences and improve your experience.
-5. **Payment Information** — Billing details handled by trusted third-party payment processors. We do not store full card numbers on our servers.
+- We collect what we need to run your account and make your books. Nothing more.
+- **We do not sell your personal information**, and we do not share it for
+  advertising.
+- **Photos you upload are used to draw your illustrations and then deleted from
+  our storage as soon as the book finishes** — the copy the illustrations were
+  drawn from, and the original you uploaded. A generation that fails keeps them
+  until you retry or delete that book.
+- We do not knowingly collect personal information from children. Accounts are
+  for adults — a parent or guardian — and a child never needs an account.
+- You can delete your account yourself, from Settings then Profile. The one thing
+  we keep is your billing records, which tax rules require. For anything else,
+  email <a href={`mailto:${envConfigs.support_email}`}>{envConfigs.support_email}</a>.
 
-## How We Use Your Information
+## 3. What we collect
 
-We use the data we collect to:
+**Account information.** Your name, email address, and password (stored only as
+a one-way hash), plus your preferred language and any profile details you add.
 
-- Provide, maintain, and improve the service.
-- Process transactions and send related confirmations.
-- Send technical notices, security alerts, and support messages.
-- Respond to your questions, feedback, and support requests.
-- Detect, prevent, and address fraud and abuse.
+**The material you give the Service to make a book.** The story idea you write,
+the child's first name if you provide one, the page text after the story is
+written, any edits you make to it, and the photo descriptions you write.
 
-## Data Sharing
+**Photos you upload.** Only if you choose to add them, and only to draw the
+illustrations. Section 6 explains exactly what happens to them.
 
-We do not sell your personal information. We may share data only in these limited cases:
+**The books you make.** The illustrations and story text we generate for you,
+and the printable PDF, which we keep so you can read and re-download your book.
 
-- With service providers who help us operate the service, under confidentiality agreements.
-- To comply with legal obligations or respond to lawful requests from public authorities.
-- To protect our rights, property, or safety, or that of our users.
+**Payment and billing information.** Which plan or pack you bought, the amount,
+the currency, the status of the subscription, and the identifiers the payment
+provider gives us. **We never receive or store your full card number** — it goes
+directly to the payment provider.
 
-## Data Security
+**Technical and security information.** Your IP address, browser user-agent
+string, and the times you signed in, which we record with your session so we can
+keep your account secure and detect abuse. Our hosting provider also keeps
+standard request logs for a limited period for security and debugging.
 
-We implement industry-standard security measures including encryption in transit, access controls, and regular reviews. No method of transmission over the Internet is 100% secure, but we work continuously to protect your information.
+**Usage information.** Which features you use and when, how many credits you
+spend, and whether a generation succeeded or failed — enough to operate,
+support, and improve the Service.
 
-## Your Rights
+## 4. How we use it, and our legal bases
 
-You have the right to access, update, export, or delete your personal information. You can do this through your account settings or by contacting us at the email address below.
+We use your information to:
 
-## Changes to This Policy
+- create and run your account, and keep you signed in;
+- write your story and draw your illustrations, and store the book you asked
+  for;
+- take payment, manage your subscription, and return credits when a generation
+  fails on our side;
+- answer your support requests, and tell you about material changes to the
+  Service or to these policies;
+- keep the Service secure: detect fraud, abuse, and attempts to break in;
+- understand how the Service is used, so we can improve it.
 
-We may update this Privacy Policy from time to time. We will notify you of any material changes by updating the date at the top of this page and, where appropriate, sending a notice through the service.
+Where the GDPR or UK GDPR applies, our legal bases are: **performance of a
+contract** (running your account and delivering what you paid for), **legitimate
+interests** (security, fraud prevention, and improving the Service), **legal
+obligation** (tax and accounting records), and **consent** where we ask for it —
+for example if you choose to receive marketing email, which you can withdraw at
+any time.
 
-## Contact Us
+We do not use your content to train our own models. We do not use automated
+decision-making to make decisions that have a legal or similarly significant
+effect on you.
 
-If you have questions about this Privacy Policy, please contact us at the email address provided on our website.
+## 5. Children's privacy
+
+**The Service is for adults.** It is not directed to children, and children may
+not create accounts or use it on their own. The account holder must be at least
+18, or the age of majority where they live.
+
+**We do not knowingly collect personal information from children.** There is no
+child sign-up, no child login, and no child profile. A child never needs to
+provide anything to us directly.
+
+**What a parent or guardian provides.** The only information about a child that
+reaches us is what the parent or guardian chooses to enter — typically the
+child's first name, and photos if they choose to upload them. That information is
+used for one purpose: to make the book the parent asked for. It is not used for
+advertising, it is not used to build a profile of the child, and it is not sold
+or shared for anyone else's marketing.
+
+**Photos are deleted when the book is done.** See section 6.
+
+**No behavioural advertising to children.** We do not serve targeted advertising
+on the Service, and we do not allow interest-based advertising to be shown to
+children. We do not use children's information to create advertising audiences.
+
+**Your rights as a parent or guardian.** You can ask us to show you what we hold
+about your child, to correct it, or to delete it, and we will do so. Email
+
+<a href={`mailto:${envConfigs.support_email}`}>{envConfigs.support_email}</a>
+with "Privacy request" in the subject line.
+
+**If you believe a child has given us personal information** without a parent's
+involvement, tell us and we will delete it promptly.
+
+This section is written with the US Children's Online Privacy Protection Act
+(COPPA) and equivalent laws elsewhere in mind, including the GDPR's rules on
+children's data. Where local law sets a higher standard than this policy, that
+standard applies.
+
+## 6. The photos you upload
+
+This is how photo uploads work, end to end:
+
+1. You upload a photo, and optionally say who is in it. It is stored in our own
+   file storage — not on a third-party image host.
+2. When you confirm a book, we make a private copy for that book, and that copy
+   is what gets sent to the AI image provider so it can draw the illustrations.
+3. **As soon as the book finishes, we delete both that copy and the original you
+   uploaded.** The exception is a generation that fails: you may want to retry
+   without uploading the photos again, so we keep them until you retry
+   successfully or delete that book. (Abandon a draft before confirming and its
+   copy is deleted too.)
+4. The illustrations themselves, which are the finished artwork, stay in your
+   book so you can read and re-download it. Delete the book and they are deleted
+   with it.
+
+One caveat, stated plainly: an AI provider receives the copy while the book is
+being generated, and we cannot reach into their systems to delete it — their
+retention is governed by their own policies, listed in section 7.
+
+We use the photos for one thing only: drawing the illustrations you asked for.
+They are never used to train models, our own or anyone else's. Deleting your
+account removes everything that is left.
+
+Please only upload photos you have the right to use. If a child appears in a
+photo, you must be their parent or legal guardian, or have that person's
+permission.
+
+## 7. AI processing, and the service providers we use
+
+Making a book means sending your material to third parties who do the work. We
+share the minimum needed for each job:
+
+- **AI generation.** Your story idea, the page text, and (if uploaded) the
+  character photos are sent to the AI providers that write the text and draw the
+  illustrations, so they can produce your book. This is the whole point of the
+  Service, and it cannot be switched off while you are using it. We choose
+  providers that contractually restrict their use of the material they process,
+  and we do not permit them to use your content to train their own models.
+- **Payments.** Checkout and subscription billing are handled by a payment
+  provider, which receives your email address, the plan or pack you bought, and
+  the amount. It handles your card details directly; we never see them.
+- **Email.** Transactional email — sign-in links, receipts, notices — goes through
+  an email delivery provider.
+- **File storage.** Your books, illustrations, and the temporary photo copies are
+  stored with a cloud object-storage provider.
+- **Hosting.** The Service runs on a cloud hosting provider, which processes
+  requests on our behalf.
+
+The specific providers are configured per deployment, and their names are
+available on request — email us and we will tell you exactly who processes your
+data. We do not sell personal information, and we do not share it for
+cross-context behavioural advertising.
+
+We may also disclose information when the law requires it, when it is necessary
+to protect someone's safety, or to establish or defend a legal claim. If the
+Service is ever sold or merged, your information may transfer to the new owner
+under the same commitments, and we will tell you before that happens.
+
+## 8. Cookies and similar technologies
+
+We use a small number of cookies and local-storage entries, and no advertising
+ones:
+
+- **Sign-in.** A session cookie that keeps you signed in. Without it, you cannot
+  use your account.
+- **Language.** A cookie remembering the language you chose, so the site does not
+  reset on every visit.
+- **Theme.** A local-storage entry remembering light or dark mode.
+
+If analytics has been enabled for this deployment, it may set cookies to measure
+traffic in aggregate. Analytics is used only to understand how the Service is
+used; it is never used to identify you or to build advertising profiles. You can
+block or delete cookies in your browser settings — the sign-in cookie is the
+only one the Service cannot work without.
+
+## 9. How long we keep it
+
+- **Character photos:** the per-book copy is deleted as soon as the book
+  finishes, and so is the original you uploaded. A generation that fails keeps
+  both until you retry or delete that book.
+- **Your books, illustrations and PDFs:** kept while your account is open, so you
+  can always re-download them. Delete a book and it goes, except where we must
+  keep a record of the transaction.
+- **Account information:** kept while your account is open. Deleting your account
+  from Settings then Profile removes your name, avatar, email address, sign-in
+  credentials and everything else that identifies you, and we keep only what tax
+  and accounting rules require — the billing records, for the period those rules
+  set. Your email address is freed, so you can sign up again with it.
+- **Security and request logs:** kept for a limited period by our hosting
+  provider, for security and debugging.
+
+## 10. Your rights
+
+Depending on where you live, you may have the right to:
+
+- **access** the personal information we hold about you, and receive a copy;
+- **correct** information that is wrong or incomplete;
+- **delete** your information, including your account — this one you can do
+  yourself, from Settings then Profile;
+- **export** your information in a portable format;
+- **object to** or **restrict** certain processing, and withdraw consent you
+  gave us;
+- **complain** to your local data protection authority.
+
+To exercise any of these, email
+
+<a href={`mailto:${envConfigs.support_email}`}>{envConfigs.support_email}</a>
+with "Privacy request" in the subject line. We will reply within 30 days, and we
+may ask you to confirm you control the account, so that nobody else can request
+your data. We will not charge you, and we will not treat you differently for
+asking.
+
+If you are in California, we do not sell or share your personal information as
+those terms are defined by the CCPA/CPRA, and we do not use sensitive personal
+information for any purpose beyond providing the Service.
+
+## 11. Security
+
+We protect your information with encryption in transit, hashed passwords,
+access controls, and routine reviews of how our systems are configured. Payments
+never touch our servers: they go straight to the payment provider. No system is
+perfectly secure, but we work to keep yours safe — and if a breach ever affects
+your rights, we will tell you and the authorities as the law requires.
+
+## 12. Where your information is processed
+
+We and our providers may process your information in countries other than the
+one you live in. Where personal information leaves the EEA, the UK, or
+Switzerland, we rely on appropriate safeguards — such as standard contractual
+clauses with the providers — and we choose providers that offer them.
+
+## 13. Changes to this policy
+
+We may update this policy as the Service or the law changes. If a change is
+material, we will tell you in advance by email or in-app notice. The date at the
+top of this page is when it last changed.
+
+## 14. How to contact us
+
+Questions, requests, or complaints about privacy go to
+
+<a href={`mailto:${envConfigs.support_email}`}>{envConfigs.support_email}</a>.
+See [Contact Us](/contact) for anything else.
