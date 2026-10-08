@@ -42,7 +42,8 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 appuser
 
-COPY --from=builder --chown=appuser:nodejs /app/.output ./.output
+# 核心修复：把 builder 里的 /app/.zeabur/output 复制为 runner 里的 ./.output
+COPY --from=builder --chown=appuser:nodejs /app/.zeabur/output ./.output
 
 USER appuser
 
