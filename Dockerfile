@@ -1,43 +1,41 @@
 FROM node:22-alpine AS base
 
-# 1. 安装依赖
-FROM base AS deps
+# 1. 基础环境
 RUN apk add --no-cache libc6-compat && npm install -g pnpm@10
-
 WORKDIR /app
 
+# 2. 构建阶段
+FROM base AS builder
+# 先复制依赖配置文件
 COPY package.json pnpm-lock.yaml* vite.config.ts ./
-COPY scripts/db-setup.mjs scripts/db-setup.mjs
-COPY src/config/db/schema.sqlite.ts src/config/db/schema.sqlite.ts
-COPY src/config/db/schema.postgres.ts src/config/db/schema.postgres.ts
-COPY src/config/db/schema.mysql.ts src/config/db/schema.mysql.ts
+# 复制数据库相关脚本（防止安装钩子需要）
+COPY scripts/ ./scripts/
+COPY src/config/db/ ./src/config/db/
 
 ARG DATABASE_PROVIDER=sqlite
 ENV DATABASE_PROVIDER=${DATABASE_PROVIDER}
-
-RUN pnpm i --frozen-lockfile
-
-# 2. 构建产物
-FROM deps AS builder
-
-WORKDIR /app
-
 ENV NODE_ENV=production
 
+# 安装全部依赖（Nuxt 构建需要 devDependencies）
+RUN pnpm i --frozen-lockfile
+
+# 复制其余所有源码并执行构建
 COPY . .
 RUN pnpm build
 
-# 【关键点】检查产物路径：如果是 .zeabur/output 则统一移动/链接到 .output
-RUN if [ -d ".zeabur/output" ]; then mv .zeabur/output .output; fi
+# 【核心修复】如果打包产物去了 .zeabur/output，确保安全移动
+RUN if [ -d ".zeabur/output" ] && [ ! -d ".output" ]; then \
+        mkdir -p .output && cp -r .zeabur/output/* .output/; \
+    fi
 
-# 3. 运行镜像
+# 3. 运行阶段
 FROM base AS runner
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 appuser
 
-# 从 builder 镜像中复制标准的 .output 文件夹
+# 把构建好的产物和可能的静态资源都同步过来
 COPY --from=builder --chown=appuser:nodejs /app/.output ./.output
 
 USER appuser
