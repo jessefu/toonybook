@@ -1,4 +1,5 @@
 {
+  "framework": "nitro",
   "build_command": "pnpm build",
-  "start_command": "node .zeabur/output/server/index.mjs"
+  "output_dir": ".zeabur/output"
 }
