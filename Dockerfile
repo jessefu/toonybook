@@ -36,18 +36,19 @@ RUN addgroup --system --gid 1001 nodejs && \
 # 将生成的标准 .output 文件夹整体同步
 COPY --from=builder --chown=appuser:nodejs /app/.output ./.output
 
+
 USER appuser
 
 EXPOSE 3000
 
-# 强制将主机绑定变量覆盖到所有已知的 Vinxi / Nitro 环境变量
 ENV NODE_ENV=production
 ENV PORT=3000
+
+# 1. 强行声明最高优先级的环境变量，防止被内部脚本回退
 ENV HOST=0.0.0.0
 ENV NITRO_HOST=0.0.0.0
 ENV VINXI_HOST=0.0.0.0
-ENV NITRO_PORT=3000
-ENV VINXI_PORT=3000
 
-# 启动标准单文件入口
-CMD ["node", ".output/server/index.mjs"]
+# 2. 【核心修复】使用 sh -c 并在命令最前端注入 HOST 和 PORT，这是 Linux 容器里最强力的覆盖手段
+CMD ["sh", "-c", "HOST=0.0.0.0 PORT=3000 NITRO_HOST=0.0.0.0 VINXI_HOST=0.0.0.0 node .output/server/index.mjs"]
+
