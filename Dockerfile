@@ -27,6 +27,9 @@ ENV NODE_ENV=production
 COPY . .
 RUN pnpm build
 
+# 【关键点】检查产物路径：如果是 .zeabur/output 则统一移动/链接到 .output
+RUN if [ -d ".zeabur/output" ]; then mv .zeabur/output .output; fi
+
 # 3. 运行镜像
 FROM base AS runner
 WORKDIR /app
@@ -34,7 +37,7 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 appuser
 
-# 【关键点】从 builder 镜像中直接复制 /app/.output 文件夹
+# 从 builder 镜像中复制标准的 .output 文件夹
 COPY --from=builder --chown=appuser:nodejs /app/.output ./.output
 
 USER appuser
@@ -45,5 +48,4 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST=0.0.0.0
 
-# 明确启动路径
 CMD ["node", ".output/server/index.mjs"]
