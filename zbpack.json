@@ -1,4 +1,4 @@
 {
   "build_command": "pnpm build",
-  "output_dir": ".zeabur/output"
+  "start_command": "node .zeabur/output/server/index.mjs"
 }
