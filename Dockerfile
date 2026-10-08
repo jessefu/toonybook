@@ -62,8 +62,7 @@ USER appuser
 EXPOSE 8080
 
 ENV NODE_ENV=production
-# 默认 8080；Zeabur 若在运行时注入自己的 PORT，会覆盖这个镜像里的值（运行时
-# 环境变量优先于镜像 ENV），所以两种机制下都能对上网关期望的端口。
+# 只是兜底：Zeabur 在运行时注入的 PORT 会盖掉它，注入得对就跟着注入的走。
 ENV PORT=8080
 
 # 强制注入最高优先级环境变量
@@ -71,4 +70,10 @@ ENV HOST=0.0.0.0
 ENV NITRO_HOST=0.0.0.0
 ENV VINXI_HOST=0.0.0.0
 
-CMD ["node", ".output/server/index.mjs"]
+# 端口守卫：PORT 不是纯数字时退回 8080。
+# 这不是假想的场景 —— Zeabur 面板上曾有一个 `PORT=${WEB_PORT}`，那个引用没有解析
+# 成数字，服务端对无法使用的值既不报错也不提示，默默退回自己的 3000 默认值，
+# 网关拨的却是它实际分配的那个端口，于是每个请求都是 502，日志却看着一切正常。
+# 有了这道守卫，坏值最多让我们落在 8080，而不是变成一个没有线索的故障。
+# PORT 合法时就完全按它走（Zeabur 注入什么就听什么）。
+CMD ["sh", "-c", "case \"$PORT\" in ''|*[!0-9]*) PORT=8080;; esac; export PORT; exec node .output/server/index.mjs"]
