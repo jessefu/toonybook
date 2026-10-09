@@ -73,7 +73,12 @@ export const Route = createRootRoute({
       ],
       links: [
         { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
-        { rel: 'apple-touch-icon', href: '/favicon.svg' },
+        // iOS ignores SVG for the home-screen icon, so this one is a raster.
+        {
+          rel: 'apple-touch-icon',
+          href: '/apple-touch-icon.png',
+          sizes: '180x180',
+        },
         ...locales.map((loc) => ({
           rel: 'alternate',
           hrefLang: loc,

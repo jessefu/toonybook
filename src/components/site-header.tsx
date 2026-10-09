@@ -8,6 +8,7 @@ import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
+import { BrandLogo } from '@/components/brand-logo';
 import { LocaleSelector } from '@/components/locale-selector';
 import { SiteUserMenu } from '@/components/site-user-menu';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -33,9 +34,7 @@ export function SiteHeader({ navLinks }: { navLinks?: NavLink[] }) {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         {/* Brand */}
         <Link href="/" className="flex items-center">
-          <span className="font-serif text-lg italic">
-            {envConfigs.app_name}
-          </span>
+          <BrandLogo title={envConfigs.app_name} className="h-10" />
         </Link>
 
         {/* Desktop nav */}
