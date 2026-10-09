@@ -28,6 +28,44 @@ export interface CreemConfigs extends PaymentConfigs {
   environment?: 'sandbox' | 'production';
 }
 
+/** Creem serves test and live from different hosts; there is no other way to tell. */
+function creemBaseUrl(environment?: 'sandbox' | 'production'): string {
+  return environment === 'production'
+    ? 'https://api.creem.io'
+    : 'https://test-api.creem.io';
+}
+
+export type CreemModerationDecision = 'allow' | 'deny' | 'flag';
+
+export interface CreemModerationResult {
+  id: string;
+  decision: CreemModerationDecision;
+  /** Units Creem billed for this call. Not product credits — see modules/moderation/creem.ts. */
+  units: number;
+}
+
+/**
+ * The store has moderation switched off (`403 moderation_disabled`). The API key
+ * is fine; this is a dashboard setting, not a failure to reach a decision.
+ */
+export class CreemModerationDisabledError extends Error {
+  constructor() {
+    super('creem moderation is disabled for this store');
+    this.name = 'CreemModerationDisabledError';
+  }
+}
+
+/** Anything else that left us without a usable decision. */
+export class CreemModerationError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status = 0) {
+    super(message);
+    this.name = 'CreemModerationError';
+    this.status = status;
+  }
+}
+
 /**
  * Creem payment provider implementation
  * @website https://creem.io/
@@ -40,10 +78,7 @@ export class CreemProvider implements PaymentProvider {
 
   constructor(configs: CreemConfigs) {
     this.configs = configs;
-    this.baseUrl =
-      configs.environment === 'production'
-        ? 'https://api.creem.io'
-        : 'https://test-api.creem.io';
+    this.baseUrl = creemBaseUrl(configs.environment);
   }
 
   // create payment
@@ -253,6 +288,80 @@ export class CreemProvider implements PaymentProvider {
     } catch (error) {
       throw error;
     }
+  }
+
+  /**
+   * Screen a text prompt against Creem's content policies.
+   *
+   * Creem requires this of every AI image/video product: no user-supplied prompt
+   * may reach a generation model without a decision from this endpoint first.
+   *
+   * Deliberately not routed through `makeRequest`, which throws away the
+   * response body — and the body is the only place the `moderation_disabled`
+   * code appears.
+   *
+   * @docs https://docs.creem.io/features/moderation
+   */
+  async moderatePrompt({
+    prompt,
+    externalId,
+    timeoutMs = 5000,
+  }: {
+    prompt: string;
+    externalId?: string;
+    /** Kept short on purpose: the caller fails closed when this elapses. */
+    timeoutMs?: number;
+  }): Promise<CreemModerationResult> {
+    const response = await fetch(`${this.baseUrl}/v1/moderation/prompt`, {
+      method: 'POST',
+      headers: {
+        'x-api-key': this.configs.apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt, external_id: externalId }),
+      signal: AbortSignal.timeout(timeoutMs),
+    }).catch((error: any) => {
+      // A timeout or a socket error is the same thing to a caller: no decision.
+      throw new CreemModerationError(
+        `creem moderation request failed: ${error?.message || error}`
+      );
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      // Only this code means "the key is fine, the store has moderation off".
+      // Every other 403 stays an error, so the caller cannot mistake it for one.
+      if (response.status === 403 && body.includes('moderation_disabled')) {
+        throw new CreemModerationDisabledError();
+      }
+      throw new CreemModerationError(
+        `creem moderation failed with status: ${response.status}`,
+        response.status
+      );
+    }
+
+    const data: any = await response.json().catch(() => null);
+    // An unrecognised decision is not an approval. The endpoint is experimental
+    // and may grow new decision values; none of them may be read as `allow` by
+    // default, so this fails closed instead.
+    if (
+      data?.decision !== 'allow' &&
+      data?.decision !== 'deny' &&
+      data?.decision !== 'flag'
+    ) {
+      throw new CreemModerationError(
+        `creem moderation returned an unusable decision: ${JSON.stringify(data?.decision)}`,
+        // Creem did answer, so this is not a transport failure — carry the real
+        // status so callers log it as `http` rather than `network`.
+        response.status
+      );
+    }
+
+    return {
+      id: String(data.id ?? ''),
+      decision: data.decision,
+      units: Number(data.usage?.units ?? 0),
+    };
   }
 
   private async generateSignature(

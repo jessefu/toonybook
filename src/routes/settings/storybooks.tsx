@@ -831,6 +831,19 @@ function StorybooksPage() {
                 </p>
               )}
             </div>
+
+            {/* Stated at the point of commitment rather than buried in the
+                footer: the request is screened before it is drawn, and this is
+                the last screen before the credits go. */}
+            <p className="text-muted-foreground text-xs">
+              {m['settings.storybooks.aup_notice']()}{' '}
+              <Link
+                href="/acceptable-use-policy"
+                className="underline underline-offset-2"
+              >
+                {m['landing.footer.aup']()}
+              </Link>
+            </p>
           </CardContent>
         </Card>
       )}

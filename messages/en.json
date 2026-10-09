@@ -899,6 +899,7 @@
   "landing.footer.terms": "Terms of Service",
   "landing.footer.refund": "Refund & Cancellation Policy",
   "landing.footer.contact": "Contact Us",
+  "landing.footer.aup": "Acceptable Use Policy",
   "landing.footer.settings": "Settings",
   "landing.footer.admin": "Admin Panel",
   "landing.footer.docs": "Documentation",
@@ -982,6 +983,7 @@
   "settings.storybooks.review_confirm": "Confirm & illustrate",
   "settings.storybooks.review_confirmed": "Illustrating your storybook…",
   "settings.storybooks.review_back": "Back to the idea",
+  "settings.storybooks.aup_notice": "Creating this book means you agree to our",
   "settings.storybooks.character_count": "{count} character photos",
   "settings.storybooks.back_to_library": "Back to library",
   "settings.storybooks.download_pdf": "Download print-ready PDF",
@@ -1007,5 +1009,7 @@
   "moderation.substances": "We can’t make a storybook from this idea — it involves drugs, smoking, alcohol or gambling, which we don’t put in children’s books. Please rephrase it and try again.",
   "moderation.profanity": "We can’t make a storybook from this idea — it contains language we don’t use in children’s books. Please rephrase it and try again.",
   "moderation.other": "We can’t make a storybook from this idea — it isn’t something we write for children. Please try a different idea.",
-  "moderation.blocked": "We can’t make a storybook from this idea — it contains something we don’t write for children. Please rephrase it and try again."
+  "moderation.blocked": "We can’t make a storybook from this idea — it contains something we don’t write for children. Please rephrase it and try again.",
+  "moderation.creem_blocked": "We can’t make a storybook from this idea — it didn’t pass our content screening. Please rephrase it and try again.",
+  "moderation.creem_unavailable": "We couldn’t check this idea before writing it, so we stopped rather than guess — nothing was charged. Please try again in a moment."
 }

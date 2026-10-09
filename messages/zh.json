@@ -899,6 +899,7 @@
   "landing.footer.terms": "服务条款",
   "landing.footer.refund": "退款与取消政策",
   "landing.footer.contact": "联系我们",
+  "landing.footer.aup": "可接受使用政策",
   "landing.footer.settings": "设置",
   "landing.footer.admin": "管理后台",
   "landing.footer.docs": "文档",
@@ -982,6 +983,7 @@
   "settings.storybooks.review_confirm": "确认并生成插画",
   "settings.storybooks.review_confirmed": "正在为你的故事配图…",
   "settings.storybooks.review_back": "回到故事想法",
+  "settings.storybooks.aup_notice": "创建本绘本即表示你同意我们的",
   "settings.storybooks.character_count": "{count} 张角色照片",
   "settings.storybooks.back_to_library": "返回书架",
   "settings.storybooks.download_pdf": "下载打印版 PDF",
@@ -1007,5 +1009,7 @@
   "moderation.substances": "这个想法没法做成绘本——里面涉及毒品、吸烟、酒精或赌博，这些我们不会写进儿童绘本。请改写后再试。",
   "moderation.profanity": "这个想法没法做成绘本——里面有儿童绘本不会使用的语言。请改写后再试。",
   "moderation.other": "这个想法没法做成绘本——它不是我们为孩子写的内容。请换一个想法试试。",
-  "moderation.blocked": "这个想法没法做成绘本——里面有我们不给孩子写的内容。请改写后再试。"
+  "moderation.blocked": "这个想法没法做成绘本——里面有我们不给孩子写的内容。请改写后再试。",
+  "moderation.creem_blocked": "这个想法没能通过内容审核，无法做成绘本。请改写后再试。",
+  "moderation.creem_unavailable": "我们暂时无法对这条内容进行审核，为确保安全已暂停，并且没有扣除积分。请稍后再试。"
 }

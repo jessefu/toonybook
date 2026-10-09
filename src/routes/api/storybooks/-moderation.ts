@@ -73,3 +73,24 @@ export function moderationMessage(
   const message = MESSAGES[category] ?? m['moderation.blocked'];
   return message({}, { locale: requestLocale(request) });
 }
+
+/**
+ * The two sentences for a refusal by Creem's Moderation API.
+ *
+ * Kept apart from `moderationMessage` because the split matters to the reader:
+ * `blocked` is about what they wrote, `unavailable` is about us not being able
+ * to tell. The second one must not read as an accusation, and must say that
+ * nothing was charged — which is true, since the screen runs before the credits
+ * are spent.
+ */
+const CREEM_MESSAGES = {
+  blocked: m['moderation.creem_blocked'],
+  unavailable: m['moderation.creem_unavailable'],
+} as const;
+
+export function creemMessage(
+  kind: keyof typeof CREEM_MESSAGES,
+  request: Request
+): string {
+  return CREEM_MESSAGES[kind]({}, { locale: requestLocale(request) });
+}

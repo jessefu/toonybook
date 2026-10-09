@@ -108,13 +108,16 @@ export function Footer() {
     },
     {
       title: m['landing.footer.legal'](),
-      // Four links, not two: a payment provider reviewing this site requires
+      // Five links, not two: a payment provider reviewing this site requires
       // Terms, Privacy, a Refund & Cancellation policy and a reachable contact
-      // to be one click from every page, and the footer is on every page.
+      // to be one click from every page, and the footer is on every page. The
+      // Acceptable Use Policy is the fifth because the merchant of record
+      // requires it of AI generation products specifically.
       links: [
         { label: m['landing.footer.terms'](), href: '/terms-of-service' },
         { label: m['landing.footer.privacy'](), href: '/privacy-policy' },
         { label: m['landing.footer.refund'](), href: '/refund-policy' },
+        { label: m['landing.footer.aup'](), href: '/acceptable-use-policy' },
         { label: m['landing.footer.contact'](), href: '/contact' },
       ],
     },
