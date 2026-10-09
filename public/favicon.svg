@@ -1,6 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="绘本星">
-  <rect width="512" height="512" rx="140" fill="#D94A32"/>
-  <text x="50%" y="50%" dy="0.08em" text-anchor="middle" dominant-baseline="central"
-        font-family="Nunito, ui-rounded, system-ui, sans-serif"
-        font-size="320" font-weight="800" fill="#FFF8EE">绘</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="fav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B4A" />
+      <stop offset="100%" stop-color="#FFB800" />
+    </linearGradient>
+  </defs>
+
+  <!-- 圆角矩形背景 -->
+  <rect width="64" height="64" rx="16" fill="url(#fav-grad)" />
+
+  <!-- 简化版开放书本 -->
+  <path d="M 14 43 C 14 43 21 38 32 38 C 43 38 50 43 50 43 L 50 24 C 50 24 43 19 32 19 C 21 19 14 24 14 24 Z" fill="#FFFFFF" />
+  <path d="M 32 19 L 32 38" stroke="#FF6B4A" stroke-width="3" stroke-linecap="round" />
+
+  <!-- 中心高亮魔法星 -->
+  <path d="M 32 8 L 34.5 13 L 40 15.5 L 34.5 18 L 32 23 L 29.5 18 L 24 15.5 L 29.5 13 Z" fill="#FFFFFF" />
 </svg>
