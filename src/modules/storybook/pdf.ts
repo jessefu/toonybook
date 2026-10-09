@@ -13,6 +13,7 @@ import { getAllConfigs } from '@/modules/config/service';
 import { buildPublicUrl, persistFileBytes } from '@/modules/storage/service';
 
 import type { StorybookLanguage, StorybookResult } from './service';
+import { padGlyphRecordsEvenly } from './sfnt';
 
 /**
  * Printable export: one A4 portrait page per scene, illustration on top and
@@ -196,6 +197,25 @@ function getCjkFont(): Promise<Uint8Array> {
     });
   }
   return cjkFontPromise;
+}
+
+let embeddableCjkFontPromise: Promise<Uint8Array> | null = null;
+
+/**
+ * The font bytes to hand pdf-lib, with glyph records padded so fontkit's
+ * subsetter cannot corrupt them — see `sfnt.ts` for the full story. Left
+ * un-padded, about half the Chinese characters in an export draw as nothing.
+ */
+function getEmbeddableCjkFont(): Promise<Uint8Array> {
+  if (!embeddableCjkFontPromise) {
+    embeddableCjkFontPromise = getCjkFont()
+      .then((bytes) => padGlyphRecordsEvenly(bytes))
+      .catch((error) => {
+        embeddableCjkFontPromise = null;
+        throw error;
+      });
+  }
+  return embeddableCjkFontPromise;
 }
 
 // --- Line wrapping ---------------------------------------------------------
@@ -463,7 +483,7 @@ export async function buildStorybookPdf(
   // of a 10 MB font download. Only CJK needs the embedded font.
   const needsCjk = language === 'zh';
   const cjkFont = needsCjk
-    ? await pdf.embedFont(await getCjkFont(), { subset: true })
+    ? await pdf.embedFont(await getEmbeddableCjkFont(), { subset: true })
     : null;
   const latinFont = await pdf.embedFont(StandardFonts.TimesRoman);
   const bodyFont = cjkFont ?? latinFont;
