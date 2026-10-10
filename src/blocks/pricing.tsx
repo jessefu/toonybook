@@ -68,7 +68,7 @@ export function Pricing({ title }: { title?: string } = {}) {
     },
     {
       icon: InfinityIcon,
-      label: m['landing.pricing.feature_unlimited_books'](),
+      label: m['landing.pricing.feature_credits_refresh'](),
     },
     { icon: Download, label: m['landing.pricing.feature_pdf_export']() },
     {
@@ -84,7 +84,7 @@ export function Pricing({ title }: { title?: string } = {}) {
     { icon: Check, label: m['landing.pricing.feature_two_months_free']() },
     {
       icon: InfinityIcon,
-      label: m['landing.pricing.feature_unlimited_books'](),
+      label: m['landing.pricing.feature_credits_refresh'](),
     },
     { icon: Download, label: m['landing.pricing.feature_pdf_export']() },
     {
@@ -99,7 +99,7 @@ export function Pricing({ title }: { title?: string } = {}) {
     },
     {
       icon: InfinityIcon,
-      label: m['landing.pricing.feature_unlimited_books'](),
+      label: m['landing.pricing.feature_credits_refresh'](),
     },
     { icon: Download, label: m['landing.pricing.feature_pdf_export']() },
     {
@@ -115,7 +115,7 @@ export function Pricing({ title }: { title?: string } = {}) {
     { icon: Check, label: m['landing.pricing.feature_two_months_free']() },
     {
       icon: InfinityIcon,
-      label: m['landing.pricing.feature_unlimited_books'](),
+      label: m['landing.pricing.feature_credits_refresh'](),
     },
     { icon: Download, label: m['landing.pricing.feature_pdf_export']() },
     {
