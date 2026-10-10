@@ -1,30 +1,30 @@
 import { ArrowRight, Play, Sparkles } from 'lucide-react';
 
+import { tDynamic } from '@/core/i18n/dynamic';
 import { Link } from '@/core/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { buttonVariants } from '@/components/ui/button';
 
+// The alts are message keys rather than English strings: this wall is the first
+// thing a reader sees, and a hardcoded alt is the one piece of the hero that
+// never switched language.
 const GALLERY_IMAGES = [
   {
-    src: '/imgs/generated/case-moon-fox-1790587202001.png',
-    alt: 'A little fox under the moonlight',
-    captionKey: 'landing.hero.img_moon_fox' as const,
+    src: '/imgs/generated/hero-paper-boat.webp',
+    altKey: 'landing.hero.img_boat',
   },
   {
-    src: '/imgs/generated/case-panda-picnic-1790587260828.png',
-    alt: 'A panda having tea with a bunny',
-    captionKey: 'landing.hero.img_panda' as const,
+    src: '/imgs/generated/hero-snow-bear.webp',
+    altKey: 'landing.hero.img_bear',
   },
   {
-    src: '/imgs/generated/case-owl-library-1790587292907.png',
-    alt: 'Owls reading in a cozy tree library',
-    captionKey: 'landing.hero.img_owl' as const,
+    src: '/imgs/generated/hero-reef.webp',
+    altKey: 'landing.hero.img_reef',
   },
   {
-    src: '/imgs/generated/case-submarine-1790587201856.png',
-    alt: 'A curious octopus exploring the coral reef',
-    captionKey: 'landing.hero.img_octopus' as const,
+    src: '/imgs/generated/hero-kite.webp',
+    altKey: 'landing.hero.img_kite',
   },
 ];
 
@@ -93,7 +93,7 @@ export function Hero() {
               >
                 <img
                   src={img.src}
-                  alt={img.alt}
+                  alt={tDynamic(img.altKey)}
                   loading={i > 1 ? 'lazy' : 'eager'}
                   className="aspect-[3/4] w-full object-cover"
                 />

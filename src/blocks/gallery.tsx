@@ -3,20 +3,20 @@ import { m } from '@/paraglide/messages.js';
 
 const CASES = [
   {
-    src: '/imgs/generated/case-moon-fox-1790587202001.png',
-    key: 'moon_fox',
+    src: '/imgs/generated/gallery-ada-fox.webp',
+    key: 'ada_fox',
   },
   {
-    src: '/imgs/generated/case-panda-picnic-1790587260828.png',
-    key: 'panda_picnic',
+    src: '/imgs/generated/gallery-max-space.webp',
+    key: 'max_space',
   },
   {
-    src: '/imgs/generated/case-owl-library-1790587292907.png',
-    key: 'owl_library',
+    src: '/imgs/generated/gallery-luna-library.webp',
+    key: 'luna_library',
   },
   {
-    src: '/imgs/generated/case-submarine-1790587201856.png',
-    key: 'coral_reef',
+    src: '/imgs/generated/gallery-sam-farm.webp',
+    key: 'sam_farm',
   },
 ];
 
