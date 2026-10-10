@@ -28,11 +28,39 @@ export interface CreemConfigs extends PaymentConfigs {
   environment?: 'sandbox' | 'production';
 }
 
-/** Creem serves test and live from different hosts; there is no other way to tell. */
-function creemBaseUrl(environment?: 'sandbox' | 'production'): string {
-  return environment === 'production'
-    ? 'https://api.creem.io'
-    : 'https://test-api.creem.io';
+const CREEM_LIVE_URL = 'https://api.creem.io';
+const CREEM_TEST_URL = 'https://test-api.creem.io';
+
+/**
+ * Which Creem a key belongs to, read off the key itself.
+ *
+ * Live keys are `creem_…` and test keys are `creem_test_…`, and each only
+ * works against its own host. The key is therefore the source of truth rather
+ * than the `creem_environment` setting, which defaults to sandbox: a live key
+ * pointed at the sandbox host still takes no money, and — the failure that is
+ * hard to see — moderation calls made with it never reach Creem's production
+ * logs, which is exactly what their account review looks at to decide whether
+ * an AI product has integrated the Moderation API at all.
+ *
+ * Returns null for a key in neither shape, so `environment` can still speak.
+ */
+export function creemEnvironmentForApiKey(
+  apiKey: string
+): 'sandbox' | 'production' | null {
+  // Ordered: `creem_test_` also starts with `creem_`.
+  if (apiKey.startsWith('creem_test_')) return 'sandbox';
+  if (apiKey.startsWith('creem_')) return 'production';
+  return null;
+}
+
+/** Creem serves test and live from different hosts. */
+function creemBaseUrl(
+  apiKey: string,
+  environment?: 'sandbox' | 'production'
+): string {
+  const resolved =
+    creemEnvironmentForApiKey(apiKey) ?? environment ?? 'sandbox';
+  return resolved === 'production' ? CREEM_LIVE_URL : CREEM_TEST_URL;
 }
 
 export type CreemModerationDecision = 'allow' | 'deny' | 'flag';
@@ -78,7 +106,7 @@ export class CreemProvider implements PaymentProvider {
 
   constructor(configs: CreemConfigs) {
     this.configs = configs;
-    this.baseUrl = creemBaseUrl(configs.environment);
+    this.baseUrl = creemBaseUrl(configs.apiKey, configs.environment);
   }
 
   // create payment

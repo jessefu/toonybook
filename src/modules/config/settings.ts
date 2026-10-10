@@ -484,6 +484,7 @@ export function getSettings(): Setting[] {
       group: 'creem',
       tab: 'payment',
       defaultValue: 'sandbox',
+      tip: 'Fallback only. The API key decides the host: creem_test_… uses sandbox, creem_… uses production. Set this to Production when you switch to a live key.',
     },
     {
       name: 'creem_api_key',

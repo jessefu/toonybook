@@ -16,6 +16,8 @@ import { AIMediaType } from '@/core/ai/types';
 import { ResendProvider } from '@/core/email/resend';
 import {
   AlipayProvider,
+  creemEnvironmentForApiKey,
+  CreemModerationDisabledError,
   CreemProvider,
   PayPalProvider,
   StripeProvider,
@@ -178,6 +180,27 @@ async function testCreem(
       configs.creem_environment === 'production' ? 'production' : 'sandbox',
   });
 
+  // The Moderation API is what an AI product is actually reviewed on, and it is
+  // the one call that says which Creem the key reaches — the account review only
+  // counts moderation traffic on the production host, and cannot see sandbox
+  // calls at all. Reported here so this button answers "is it live?" without
+  // waiting for a review to come back.
+  const moderation: Record<string, string> = {
+    'Moderation host': moderationHostLabel(configs.creem_api_key),
+  };
+  try {
+    const result = await provider.moderatePrompt({
+      prompt: 'a watercolor painting of a sunset',
+      externalId: 'admin-connection-test',
+    });
+    moderation['Moderation API'] = `reachable — decision "${result.decision}"`;
+  } catch (error) {
+    moderation['Moderation API'] =
+      error instanceof CreemModerationDisabledError
+        ? 'FAILED — moderation is switched off for this store; enable it in the Creem dashboard'
+        : `FAILED — ${error instanceof Error ? error.message : String(error)}`;
+  }
+
   const order: PaymentOrder = {
     type: PaymentType.ONE_TIME,
     orderNo: getUniSeq('TEST'),
@@ -192,10 +215,21 @@ async function testCreem(
     success: true,
     message: 'Checkout session created',
     details: {
+      ...moderation,
       'Session ID': session.checkoutInfo.sessionId,
       'Checkout URL': session.checkoutInfo.checkoutUrl,
     },
   };
+}
+
+/** Which Creem a key reaches, and whether that is the one reviews count. */
+function moderationHostLabel(apiKey: string): string {
+  const environment = creemEnvironmentForApiKey(apiKey);
+  if (environment === 'production') return 'api.creem.io (live)';
+  if (environment === 'sandbox') {
+    return 'test-api.creem.io (sandbox — does NOT count for the Creem account review)';
+  }
+  return 'unrecognised key prefix — falling back to the Environment setting';
 }
 
 // --- PayPal ---------------------------------------------------------------

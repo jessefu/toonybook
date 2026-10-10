@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 
 import { getAuth } from '@/core/auth';
+import { screenTextWithCreem } from '@/modules/moderation/creem';
 import { moderateAll, ModerationError } from '@/modules/moderation/service';
 import { draftStory } from '@/modules/storybook/service';
 import {
@@ -10,10 +11,11 @@ import {
   STORYBOOK_MIN_PAGES,
   STORYBOOK_STYLES,
 } from '@/modules/storybook/styles';
+import { getSnowId } from '@/lib/hash';
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
 
-import { moderationMessage } from './-moderation';
+import { creemMessage, moderationMessage } from './-moderation';
 
 /**
  * Step 1 of the two-step flow: write the story text only.
@@ -57,17 +59,52 @@ async function POST({ request }: { request: Request }) {
       return respErr(parsed.error.issues[0]?.message || 'Invalid input');
     }
 
-    // Content moderation, before anything else happens. The idea is the field
-    // the user actually writes, but the names travel into the printed book too,
-    // so they are checked with it.
-    const verdict = moderateAll([
+    // Content moderation runs in two passes, before the writing model is
+    // called. The idea is the field the user actually writes, but the names
+    // travel into the printed book too, so they are checked with it.
+    //
+    // Creem's own requirement is scoped to image and video generation, and this
+    // route only writes text. It is screened anyway because their review asks
+    // for the Moderation API on "all prompt-based generation endpoints", and
+    // this is one: a user prompt goes out to a model. The story it returns then
+    // becomes the scene text that the illustration model is later prompted
+    // with, so what is screened here is upstream of what gets drawn.
+    const fields = [
       parsed.data.idea,
       parsed.data.childName,
       ...(parsed.data.characterNames ?? []),
-    ]);
+    ];
+
+    // Pass 1: the local word list. Free, instant and network-free, so it
+    // settles the obvious cases without spending a Creem unit on a call whose
+    // verdict could not change the outcome.
+    const verdict = moderateAll(fields);
     if (!verdict.allowed) {
       console.warn('storybook draft rejected by moderation:', verdict.matches);
       return respErr(moderationMessage(verdict.category, request));
+    }
+
+    // Pass 2: Creem's Moderation API.
+    const externalId = `storybook-draft:${session.user.id}:${getSnowId()}`;
+    const screened = await screenTextWithCreem({
+      prompt: fields.filter((field): field is string => !!field).join('\n\n'),
+      externalId,
+    });
+    if (screened.kind === 'blocked') {
+      console.warn('storybook draft rejected by creem moderation:', {
+        externalId,
+        decision: screened.decision,
+      });
+      return respErr(creemMessage('blocked', request));
+    }
+    if (screened.kind === 'unavailable') {
+      // Fail closed. The draft is free and nothing has been stored, so the
+      // attempt is all the user loses.
+      console.warn('storybook draft refused: creem moderation unavailable', {
+        externalId,
+        reason: screened.reason,
+      });
+      return respErr(creemMessage('unavailable', request));
     }
 
     const story = await draftStory(parsed.data);

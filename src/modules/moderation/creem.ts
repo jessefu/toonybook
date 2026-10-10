@@ -34,6 +34,9 @@ export type CreemScreenOutcome =
   /** Block. No decision was reached, and the requirement is to fail closed. */
   | { kind: 'unavailable'; reason: 'network' | 'http' };
 
+/** Set once the missing-key case has been reported, so logs do not repeat it. */
+let warnedMissingKey = false;
+
 /**
  * Ask Creem whether `prompt` may go to a generation model.
  *
@@ -60,13 +63,28 @@ export async function screenTextWithCreem({
 
   const configs = await getAllConfigs();
   const apiKey = configs['creem_api_key'];
-  if (!apiKey) return { kind: 'skipped' };
+  if (!apiKey) {
+    // Once per process, not once per request: this is a standing configuration
+    // fact, and a generation endpoint would otherwise print it every time. It
+    // is loud because Creem reviews the Moderation API by looking for calls in
+    // their production logs — with no key there are none, and the integration
+    // reads as missing rather than misconfigured.
+    if (!warnedMissingKey) {
+      warnedMissingKey = true;
+      console.error(
+        'creem moderation is skipped: no creem_api_key is configured, so user prompts reach the generation model unscreened by Creem. Set the key in admin settings if this store takes payment through Creem.'
+      );
+    }
+    return { kind: 'skipped' };
+  }
 
   const provider = createCreemProvider({
     apiKey,
-    // Same mapping as modules/payment/service.ts. Key presence alone enables
-    // moderation: `creem_enabled` gates checkout, not this — a store can take
-    // payment elsewhere and still owe Creem a screened prompt.
+    // Only a fallback: the key's own prefix (`creem_` vs `creem_test_`) picks
+    // the host, so a live key cannot silently be sent to the sandbox. See
+    // creemEnvironmentForApiKey. Key presence alone enables moderation;
+    // `creem_enabled` gates checkout, not this — a store can take payment
+    // elsewhere and still owe Creem a screened prompt.
     environment:
       configs['creem_environment'] === 'production' ? 'production' : 'sandbox',
   });
