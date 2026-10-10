@@ -279,17 +279,75 @@ function parseJson<T>(raw: unknown): T | null {
   }
 }
 
+/**
+ * Pull the story object out of whatever the model actually returned.
+ *
+ * The prompt asks for JSON only and the request sets `jsonMode`, and models
+ * still wrap it in a fence, open with a sentence, or keep writing after the
+ * closing brace. A trailing sentence is enough to break a "first `{` to last
+ * `}`" slice, because those two braces then belong to different objects and
+ * the text between them is nothing JSON.parse will accept — it reports that as
+ * "Unexpected non-whitespace character after JSON", which names the symptom
+ * and none of the cause.
+ *
+ * So walk the text for *balanced* top-level objects instead and take the first
+ * one shaped like a story. Braces inside strings do not count towards the
+ * depth, which is what lets a "scene" quote dialogue containing one.
+ */
 function extractJsonObject(raw: string): any {
-  const trimmed = raw
+  const text = raw
     .trim()
     .replace(/^```(?:json)?/i, '')
     .replace(/```$/, '');
-  const start = trimmed.indexOf('{');
-  const end = trimmed.lastIndexOf('}');
-  if (start === -1 || end === -1 || end <= start) {
+
+  const candidates: any[] = [];
+  let depth = 0;
+  let start = -1;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+    } else if (char === '{') {
+      if (depth === 0) start = i;
+      depth++;
+    } else if (char === '}' && depth > 0) {
+      depth--;
+      if (depth === 0) {
+        try {
+          candidates.push(JSON.parse(text.slice(start, i + 1)));
+        } catch {
+          // Not usable on its own. The next balanced object may be.
+        }
+      }
+    }
+  }
+
+  if (!candidates.length) {
     throw new Error('story text response is not JSON');
   }
-  return JSON.parse(trimmed.slice(start, end + 1));
+
+  // Prefer one shaped like a story: a model that echoes the schema before
+  // answering would otherwise be taken at its placeholder.
+  return (
+    candidates.find(
+      (candidate) =>
+        candidate &&
+        typeof candidate.title === 'string' &&
+        Array.isArray(candidate.pages) &&
+        candidate.pages.length > 0
+    ) ?? candidates[0]
+  );
 }
 
 /** Write the story text with whichever LLM is configured; null when none is. */
